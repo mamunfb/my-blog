@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import RichTextEditor from "@/components/RichTextEditor";
 import {
   Select,
   SelectContent,
@@ -188,16 +189,15 @@ export default function AdminPostEditor({ postId, onSave }: AdminPostEditorProps
         {/* Content Editor */}
         <div>
           <Label htmlFor="content">Content *</Label>
-          <Textarea
-            id="content"
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            placeholder="Write your post content here... (Markdown supported)"
-            rows={15}
-            className="mt-2 font-mono text-sm"
-          />
+          <div className="mt-2">
+            <RichTextEditor
+              value={content}
+              onChange={setContent}
+              placeholder="Write your post content here..."
+            />
+          </div>
           <p className="text-xs text-foreground/60 mt-2">
-            Markdown formatting is supported. Use **bold**, *italic*, # headings, etc.
+            Use the toolbar above to format your content with bold, italic, headings, lists, links, and images
           </p>
         </div>
 

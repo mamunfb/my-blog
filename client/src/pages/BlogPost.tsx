@@ -6,14 +6,15 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { getLoginUrl } from "@/const";
+import ReadingTime from "@/components/ReadingTime";
+import SocialShare from "@/components/SocialShare";
+import PostRating from "@/components/PostRating";
+import TableOfContents from "@/components/TableOfContents";
+import PopularPosts from "@/components/PopularPosts";
+import TagCloud from "@/components/TagCloud";
 import {
   Calendar,
   User,
-  Share2,
-  Twitter,
-  Facebook,
-  Linkedin,
-  Copy,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { useState } from "react";
@@ -22,7 +23,6 @@ import { toast } from "sonner";
 export default function BlogPost() {
   const [, params] = useRoute("/blog/:slug");
   const [commentText, setCommentText] = useState("");
-  const [showShareMenu, setShowShareMenu] = useState(false);
 
   const { user, isAuthenticated } = useAuth();
   const { data: categories } = trpc.blog.getAllCategories.useQuery();
@@ -60,31 +60,8 @@ export default function BlogPost() {
     );
   }
 
-  const readingTime = post
-    ? Math.ceil(post.content.split(/\s+/).length / 200)
-    : 0;
-
   const shareUrl = `${window.location.origin}/blog/${post?.slug}`;
   const shareTitle = post?.title || "Check out this article";
-
-  const handleShare = (platform: string) => {
-    const encodedUrl = encodeURIComponent(shareUrl);
-    const encodedTitle = encodeURIComponent(shareTitle);
-
-    const shareLinks: Record<string, string> = {
-      twitter: `https://twitter.com/intent/tweet?url=${encodedUrl}&text=${encodedTitle}`,
-      facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`,
-      linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}`,
-      copy: "",
-    };
-
-    if (platform === "copy") {
-      navigator.clipboard.writeText(shareUrl);
-      toast.success("Link copied to clipboard!");
-    } else if (shareLinks[platform]) {
-      window.open(shareLinks[platform], "_blank", "width=600,height=400");
-    }
-  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -129,147 +106,121 @@ export default function BlogPost() {
                   <User className="w-4 h-4" />
                   By Author
                 </span>
-                <span className="reading-time">{readingTime} min read</span>
+                <ReadingTime content={post.content} />
               </div>
             </header>
 
-            {/* Content */}
-            <div className="prose mb-12">
-              <div
-                dangerouslySetInnerHTML={{ __html: post.content }}
-                className="prose"
-              />
-            </div>
+            {/* Layout with Sidebar */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              {/* Main Content */}
+              <div className="lg:col-span-2">
+                {/* Table of Contents */}
+                {post.content && post.content.length > 2000 && (
+                  <TableOfContents content={post.content} className="mb-8" />
+                )}
 
-            {/* Social Share */}
-            <div className="py-8 border-t border-b border-border mb-12">
-              <div className="flex items-center justify-between">
-                <span className="font-semibold">Share this article</span>
-                <div className="relative">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setShowShareMenu(!showShareMenu)}
-                  >
-                    <Share2 className="w-4 h-4 mr-2" />
-                    Share
-                  </Button>
+                {/* Content */}
+                <div className="prose dark:prose-invert max-w-none mb-12">
+                  <div
+                    dangerouslySetInnerHTML={{ __html: post.content }}
+                    className="prose dark:prose-invert"
+                  />
+                </div>
 
-                  {showShareMenu && (
-                    <div className="absolute right-0 mt-2 w-48 bg-card border border-border rounded-lg shadow-lg z-50">
-                      <button
+                {/* Social Share */}
+                <div className="py-8 border-t border-b border-border mb-12">
+                  <SocialShare title={shareTitle} url={shareUrl} />
+                </div>
+
+                {/* Post Rating */}
+                <div className="mb-12">
+                  <PostRating postId={post.id} initialLikes={0} />
+                </div>
+
+                {/* Comments Section */}
+                <section className="mb-12">
+                  <h2 className="text-3xl font-bold mb-8">Comments</h2>
+
+                  {isAuthenticated ? (
+                    <div className="bg-card border border-border rounded-lg p-6 mb-8">
+                      <h3 className="font-semibold mb-4">Leave a comment</h3>
+                      <Textarea
+                        placeholder="Share your thoughts..."
+                        value={commentText}
+                        onChange={(e) => setCommentText(e.target.value)}
+                        className="mb-4"
+                        rows={4}
+                      />
+                      <Button
+                        disabled={!commentText.trim() || createCommentMutation.isPending}
                         onClick={() => {
-                          handleShare("twitter");
-                          setShowShareMenu(false);
+                          if (post?.id) {
+                            createCommentMutation.mutate({
+                              postId: post.id,
+                              content: commentText,
+                            });
+                          }
                         }}
-                        className="w-full text-left px-4 py-2 hover:bg-muted flex items-center gap-2 border-b border-border"
                       >
-                        <Twitter className="w-4 h-4" />
-                        Twitter
-                      </button>
-                      <button
-                        onClick={() => {
-                          handleShare("facebook");
-                          setShowShareMenu(false);
-                        }}
-                        className="w-full text-left px-4 py-2 hover:bg-muted flex items-center gap-2 border-b border-border"
-                      >
-                        <Facebook className="w-4 h-4" />
-                        Facebook
-                      </button>
-                      <button
-                        onClick={() => {
-                          handleShare("linkedin");
-                          setShowShareMenu(false);
-                        }}
-                        className="w-full text-left px-4 py-2 hover:bg-muted flex items-center gap-2 border-b border-border"
-                      >
-                        <Linkedin className="w-4 h-4" />
-                        LinkedIn
-                      </button>
-                      <button
-                        onClick={() => {
-                          handleShare("copy");
-                          setShowShareMenu(false);
-                        }}
-                        className="w-full text-left px-4 py-2 hover:bg-muted flex items-center gap-2"
-                      >
-                        <Copy className="w-4 h-4" />
-                        Copy Link
-                      </button>
+                        {createCommentMutation.isPending ? "Posting..." : "Post Comment"}
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="bg-muted border border-border rounded-lg p-6 mb-8 text-center">
+                      <p className="text-foreground/70 mb-4">
+                        Sign in to leave a comment
+                      </p>
+                      <a href={getLoginUrl()}>
+                        <Button>Login to Comment</Button>
+                      </a>
                     </div>
                   )}
-                </div>
+
+                  {/* Comments List */}
+                  <div className="space-y-6">
+                    {commentsLoading ? (
+                      <Skeleton className="h-24" />
+                    ) : comments && comments.length > 0 ? (
+                      comments.map((comment) => (
+                        <div
+                          key={comment.id}
+                          className="bg-card border border-border rounded-lg p-6"
+                        >
+                          <div className="flex items-center justify-between mb-3">
+                            <span className="font-semibold">Anonymous</span>
+                            <span className="text-sm text-foreground/60">
+                              {formatDistanceToNow(new Date(comment.createdAt), {
+                                addSuffix: true,
+                              })}
+                            </span>
+                          </div>
+                          <p className="text-foreground/80">{comment.content}</p>
+                        </div>
+                      ))
+                    ) : (
+                      <p className="text-foreground/70 text-center py-8">
+                        No comments yet. Be the first to share your thoughts!
+                      </p>
+                    )}
+                  </div>
+                </section>
               </div>
+
+              {/* Sidebar */}
+              <aside className="lg:col-span-1">
+                {/* Popular Posts Widget */}
+                <div className="bg-card border border-border rounded-lg p-6 mb-6">
+                  <h3 className="font-bold text-lg mb-4">Popular Posts</h3>
+                  <PopularPosts limit={5} />
+                </div>
+
+                {/* Tag Cloud */}
+                <div className="bg-card border border-border rounded-lg p-6">
+                  <h3 className="font-bold text-lg mb-4">Tags</h3>
+                  <TagCloud />
+                </div>
+              </aside>
             </div>
-
-            {/* Comments Section */}
-            <section className="mb-12">
-              <h2 className="text-3xl font-bold mb-8">Comments</h2>
-
-              {isAuthenticated ? (
-                <div className="bg-card border border-border rounded-lg p-6 mb-8">
-                  <h3 className="font-semibold mb-4">Leave a comment</h3>
-                  <Textarea
-                    placeholder="Share your thoughts..."
-                    value={commentText}
-                    onChange={(e) => setCommentText(e.target.value)}
-                    className="mb-4"
-                    rows={4}
-                  />
-                  <Button
-                    disabled={!commentText.trim() || createCommentMutation.isPending}
-                    onClick={() => {
-                      if (post?.id) {
-                        createCommentMutation.mutate({
-                          postId: post.id,
-                          content: commentText,
-                        });
-                      }
-                    }}
-                  >
-                    {createCommentMutation.isPending ? "Posting..." : "Post Comment"}
-                  </Button>
-                </div>
-              ) : (
-                <div className="bg-muted border border-border rounded-lg p-6 mb-8 text-center">
-                  <p className="text-foreground/70 mb-4">
-                    Sign in to leave a comment
-                  </p>
-                  <a href={getLoginUrl()}>
-                    <Button>Login to Comment</Button>
-                  </a>
-                </div>
-              )}
-
-              {/* Comments List */}
-              <div className="space-y-6">
-                {commentsLoading ? (
-                  <Skeleton className="h-24" />
-                ) : comments && comments.length > 0 ? (
-                  comments.map((comment) => (
-                    <div
-                      key={comment.id}
-                      className="bg-card border border-border rounded-lg p-6"
-                    >
-                      <div className="flex items-center justify-between mb-3">
-                        <span className="font-semibold">Anonymous</span>
-                        <span className="text-sm text-foreground/60">
-                          {formatDistanceToNow(new Date(comment.createdAt), {
-                            addSuffix: true,
-                          })}
-                        </span>
-                      </div>
-                      <p className="text-foreground/80">{comment.content}</p>
-                    </div>
-                  ))
-                ) : (
-                  <p className="text-foreground/70 text-center py-8">
-                    No comments yet. Be the first to share your thoughts!
-                  </p>
-                )}
-              </div>
-            </section>
           </article>
         </>
       ) : (
