@@ -10,20 +10,26 @@ import BlogListing from "./pages/BlogListing";
 import BlogPost from "./pages/BlogPost";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminPanel from "./pages/AdminPanel";
+import { Footer } from "./components/Footer";
 
 function Router() {
   // make sure to consider if you need authentication for certain routes
   return (
-    <Switch>
-      <Route path={"/"} component={Home} />
-      <Route path={"/blog"} component={BlogListing} />
-      <Route path={"/blog/:slug"} component={BlogPost} />
-      <Route path={"/admin"} component={AdminPanel} />
-      <Route path={"/admin/:tab"} component={AdminPanel} />
-      <Route path={"/404"} component={NotFound} />
-      {/* Final fallback route */}
-      <Route component={NotFound} />
-    </Switch>
+    <div className="flex flex-col min-h-screen">
+      <main className="flex-grow">
+        <Switch>
+          <Route path={"/"} component={Home} />
+          <Route path={"/blog"} component={BlogListing} />
+          <Route path={"/blog/:slug"} component={BlogPost} />
+          <Route path={"/admin"} component={AdminPanel} />
+          <Route path={"/admin/:tab"} component={AdminPanel} />
+          <Route path={"/404"} component={NotFound} />
+          {/* Final fallback route */}
+          <Route component={NotFound} />
+        </Switch>
+      </main>
+      <Footer />
+    </div>
   );
 }
 
