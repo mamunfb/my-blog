@@ -9,6 +9,8 @@ import {
   Send,
 } from "lucide-react";
 import { toast } from "sonner";
+import { useEffect, useState } from "react";
+import { SocialSharingTracker } from "@/lib/socialSharingTracker";
 
 interface EnhancedSocialShareProps {
   title: string;
@@ -34,13 +36,28 @@ export default function EnhancedSocialShare({
     email: `mailto:?subject=${encodedTitle}&body=${encodedExcerpt}%0A%0A${encodedUrl}`,
   };
 
+  const [tracker, setTracker] = useState<SocialSharingTracker | null>(null);
+
+  // Extract post ID from URL (assumes URL format like /blog/post-slug)
+  const getPostId = () => {
+    const match = url.match(/\/(\d+)/);
+    return match ? parseInt(match[1], 10) : 1; // Default to 1 if not found
+  };
+
+  useEffect(() => {
+    setTracker(new SocialSharingTracker(getPostId()));
+  }, [url]);
+
   const handleShare = (platform: string, link: string) => {
     if (platform === "copy") {
       navigator.clipboard.writeText(url);
+      tracker?.trackShare("email"); // Track as email share
       toast.success("Link copied to clipboard!");
       return;
     }
 
+    // Track the share
+    tracker?.trackShare(platform as any);
     window.open(link, "_blank", "width=600,height=400");
   };
 

@@ -22,6 +22,7 @@ import { toast } from "sonner";
 import { useLanguageTracking } from "@/hooks/useLanguageTracking";
 import { useTranslation } from "@/contexts/TranslationContext";
 import Breadcrumb from "@/components/Breadcrumb";
+import CommentSection from "@/components/CommentSection";
 import { getOptimizedImageUrl, setupLazyLoadingObserver } from "@/lib/imageOptimization";
 import {
   setMetaTags,
@@ -203,70 +204,42 @@ export default function BlogPost() {
 
                 {/* Comments Section */}
                 <section className="mb-12">
-                  <h2 className="text-3xl font-bold mb-8">Comments</h2>
-
-                  {isAuthenticated ? (
-                    <div className="bg-card border border-border rounded-lg p-6 mb-8">
-                      <h3 className="font-semibold mb-4">Leave a comment</h3>
-                      <Textarea
-                        placeholder="Share your thoughts..."
-                        value={commentText}
-                        onChange={(e) => setCommentText(e.target.value)}
-                        className="mb-4"
-                        rows={4}
-                      />
-                      <Button
-                        disabled={!commentText.trim() || createCommentMutation.isPending}
-                        onClick={() => {
-                          if (post?.id) {
-                            createCommentMutation.mutate({
+                  <CommentSection
+                    postId={post?.id || 0}
+                    comments={(comments || []).map((c) => ({
+                      id: c.id,
+                      content: c.content,
+                      authorName: "Anonymous",
+                      rating: 5,
+                      createdAt: c.createdAt,
+                      approved: c.approved as "approved" | "pending" | "rejected",
+                    }))}
+                    isLoading={commentsLoading}
+                    onCommentSubmit={async (content, rating) => {
+                      if (post?.id && isAuthenticated) {
+                        await new Promise((resolve) => {
+                          createCommentMutation.mutate(
+                            {
                               postId: post.id,
-                              content: commentText,
-                            });
-                          }
-                        }}
-                      >
-                        {createCommentMutation.isPending ? "Posting..." : "Post Comment"}
-                      </Button>
-                    </div>
-                  ) : (
-                    <div className="bg-muted border border-border rounded-lg p-6 mb-8 text-center">
-                      <p className="text-foreground/70 mb-4">
-                        Sign in to leave a comment
-                      </p>
-                      <a href={getLoginUrl()}>
-                        <Button>Login to Comment</Button>
-                      </a>
-                    </div>
-                  )}
-
-                  {/* Comments List */}
-                  <div className="space-y-6">
-                    {commentsLoading ? (
-                      <Skeleton className="h-24" />
-                    ) : comments && comments.length > 0 ? (
-                      comments.map((comment) => (
-                        <div
-                          key={comment.id}
-                          className="bg-card border border-border rounded-lg p-6"
-                        >
-                          <div className="flex items-center justify-between mb-3">
-                            <span className="font-semibold">Anonymous</span>
-                            <span className="text-sm text-foreground/60">
-                              {formatDistanceToNow(new Date(comment.createdAt), {
-                                addSuffix: true,
-                              })}
-                            </span>
-                          </div>
-                          <p className="text-foreground/80">{comment.content}</p>
-                        </div>
-                      ))
-                    ) : (
-                      <p className="text-foreground/70 text-center py-8">
-                        No comments yet. Be the first to share your thoughts!
-                      </p>
-                    )}
-                  </div>
+                              content,
+                            },
+                            {
+                              onSuccess: () => {
+                                setCommentText("");
+                                resolve(undefined);
+                              },
+                            }
+                          );
+                        });
+                      } else if (!isAuthenticated) {
+                        window.location.href = getLoginUrl();
+                      }
+                    }}
+                    onCommentDelete={async (commentId) => {
+                      // Implement delete functionality
+                      toast.error("Delete functionality coming soon");
+                    }}
+                  />
                 </section>
               </div>
 

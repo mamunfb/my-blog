@@ -11,6 +11,8 @@ import { toast } from "sonner";
 import AnalyticsDashboard from "@/components/AnalyticsDashboard";
 import PostListingTable from "@/components/PostListingTable";
 import ImageUpload from "@/components/ImageUpload";
+import { useAutoSaveDraft } from "@/hooks/useAutoSaveDraft";
+import { useEffect } from "react";
 
 export default function AdminPanel() {
   const { user } = useAuth();
@@ -25,6 +27,31 @@ export default function AdminPanel() {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [editingPostId, setEditingPostId] = useState<number | null>(null);
+
+  // Auto-save draft
+  const { loadDraft, deleteDraft, getDraftInfo } = useAutoSaveDraft(formData, {
+    postId: editingPostId || undefined,
+    saveInterval: 30000,
+    onSave: async (draft) => {
+      console.log("Draft auto-saved:", draft);
+    },
+  });
+
+  // Load draft on mount
+  useEffect(() => {
+    const draft = loadDraft();
+    if (draft) {
+      setFormData((prev) => ({
+        ...prev,
+        title: draft.title || prev.title,
+        slug: draft.slug || prev.slug,
+        content: draft.content || prev.content,
+        excerpt: draft.excerpt || prev.excerpt,
+        featuredImageUrl: draft.featuredImageUrl || prev.featuredImageUrl,
+      }));
+      toast.info("Draft loaded from previous session");
+    }
+  }, [loadDraft]);
 
   // Redirect if not admin
   if (user?.role !== "admin") {
