@@ -48,39 +48,39 @@ export default function NewsletterSubscription() {
   }
 
   return (
-    <div className="bg-card border border-border rounded-lg p-8">
-      <div className="flex items-start gap-4 mb-6">
-        <div className="w-10 h-10 bg-accent/10 rounded-lg flex items-center justify-center flex-shrink-0">
-          <Mail className="w-5 h-5 text-accent" />
+    <div className="bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 dark:from-blue-950/40 dark:via-purple-950/40 dark:to-pink-950/40 border-2 border-purple-300 dark:border-purple-700 rounded-xl p-6 shadow-lg hover:shadow-xl transition-shadow">
+      <div className="flex items-start gap-3 mb-5">
+        <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-500 rounded-lg flex items-center justify-center flex-shrink-0 shadow-md">
+          <Mail className="w-6 h-6 text-white" />
         </div>
         <div>
-          <h3 className="text-xl font-bold mb-2">Subscribe to Our Newsletter</h3>
-          <p className="text-foreground/70">
-            Get the latest articles delivered directly to your inbox. No spam, just great content.
+          <h3 className="text-lg font-bold bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400 bg-clip-text text-transparent mb-1">Subscribe to Our Newsletter</h3>
+          <p className="text-sm text-gray-700 dark:text-gray-300">
+            Get the latest articles delivered to your inbox. No spam, just great content.
           </p>
         </div>
       </div>
 
-      <form onSubmit={handleSubscribe} className="flex gap-2">
+      <form onSubmit={handleSubscribe} className="flex gap-2 flex-col sm:flex-row">
         <Input
           type="email"
           placeholder="Enter your email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           disabled={isLoading}
-          className="flex-1"
+          className="flex-1 border-2 border-purple-300 dark:border-purple-600 focus:border-purple-500 dark:focus:border-purple-400 rounded-lg"
         />
         <Button
           type="submit"
           disabled={isLoading || !email}
-          className="px-6"
+          className="px-6 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold rounded-lg shadow-md hover:shadow-lg transition-all"
         >
           {isLoading ? "Subscribing..." : "Subscribe"}
         </Button>
       </form>
 
-      <p className="text-xs text-foreground/60 mt-3">
-        We respect your privacy. Unsubscribe at any time.
+      <p className="text-xs text-gray-600 dark:text-gray-400 mt-3">
+        ✓ We respect your privacy. Unsubscribe anytime.
       </p>
     </div>
   );
