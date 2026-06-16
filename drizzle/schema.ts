@@ -84,3 +84,18 @@ export const comments = mysqlTable("comments", {
 
 export type Comment = typeof comments.$inferSelect;
 export type InsertComment = typeof comments.$inferInsert;
+
+export const languageAnalytics = mysqlTable("languageAnalytics", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").references(() => users.id, { onDelete: "cascade" }),
+  language: varchar("language", { length: 10 }).notNull(),
+  postId: int("postId").references(() => posts.id, { onDelete: "cascade" }),
+  viewCount: int("viewCount").default(1).notNull(),
+  timeSpent: int("timeSpent").default(0).notNull(),
+  eventType: varchar("eventType", { length: 50 }).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type LanguageAnalytics = typeof languageAnalytics.$inferSelect;
+export type InsertLanguageAnalytics = typeof languageAnalytics.$inferInsert;

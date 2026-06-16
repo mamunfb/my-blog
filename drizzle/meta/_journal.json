@@ -15,6 +15,13 @@
       "when": 1781630349715,
       "tag": "0001_regular_iron_fist",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1781637680256,
+      "tag": "0002_dashing_ravenous",
+      "breakpoints": true
     }
   ]
 }

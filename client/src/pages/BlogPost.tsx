@@ -22,6 +22,7 @@ import { toast } from "sonner";
 import { useLanguageTracking } from "@/hooks/useLanguageTracking";
 import { useTranslation } from "@/contexts/TranslationContext";
 import Breadcrumb from "@/components/Breadcrumb";
+import { getOptimizedImageUrl, setupLazyLoadingObserver } from "@/lib/imageOptimization";
 import {
   setMetaTags,
   setHrefLangLinks,
@@ -132,8 +133,10 @@ export default function BlogPost() {
           {post.featuredImageUrl && (
             <div className="w-full h-96 md:h-[500px] bg-muted overflow-hidden">
               <img
-                src={post.featuredImageUrl}
+                src={getOptimizedImageUrl(post.featuredImageUrl, { width: 1200, quality: 80 })}
                 alt={post.title}
+                loading="lazy"
+                decoding="async"
                 className="w-full h-full object-cover"
               />
             </div>
