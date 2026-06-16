@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import Navigation from "@/components/Navigation";
 import LanguageSwitchTransition from "@/components/LanguageSwitchTransition";
-import { ArrowRight, Calendar, User } from "lucide-react";
+import { ArrowRight, Calendar, User, Users, FileText, TrendingUp } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { useTranslation } from "@/contexts/TranslationContext";
 import Breadcrumb from "@/components/Breadcrumb";
@@ -23,6 +23,7 @@ export default function Home() {
     trpc.blog.getFeaturedPosts.useQuery();
   const { data: latestPosts, isLoading: latestLoading } =
     trpc.blog.getLatestPosts.useQuery({ limit: 6 });
+  const { data: allPosts } = trpc.blog.getLatestPosts.useQuery({ limit: 1000 });
 
   // Set SEO meta tags
   useEffect(() => {
@@ -70,6 +71,65 @@ export default function Home() {
           />
         </div>
 
+        {/* Social Proof Badges */}
+        <section className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950/30 dark:to-purple-950/30 border-b border-blue-200 dark:border-blue-800 py-8">
+          <div className="container">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+              {/* Total Posts Badge */}
+              <div className="bg-gradient-to-br from-blue-100 to-blue-50 dark:from-blue-900/40 dark:to-blue-900/20 border-2 border-blue-300 dark:border-blue-700 rounded-lg p-6 text-center hover:shadow-lg transition-shadow">
+                <div className="flex justify-center mb-2">
+                  <FileText className="w-8 h-8 text-blue-600 dark:text-blue-400" />
+                </div>
+                <p className="text-3xl font-bold text-blue-600 dark:text-blue-400 mb-1">
+                  {allPosts?.length || 0}+
+                </p>
+                <p className="text-sm text-gray-700 dark:text-gray-300 font-semibold">
+                  Quality Posts
+                </p>
+              </div>
+
+              {/* Active Readers Badge */}
+              <div className="bg-gradient-to-br from-purple-100 to-purple-50 dark:from-purple-900/40 dark:to-purple-900/20 border-2 border-purple-300 dark:border-purple-700 rounded-lg p-6 text-center hover:shadow-lg transition-shadow">
+                <div className="flex justify-center mb-2">
+                  <Users className="w-8 h-8 text-purple-600 dark:text-purple-400" />
+                </div>
+                <p className="text-3xl font-bold text-purple-600 dark:text-purple-400 mb-1">
+                  100+
+                </p>
+                <p className="text-sm text-gray-700 dark:text-gray-300 font-semibold">
+                  Active Readers
+                </p>
+              </div>
+
+              {/* Languages Badge */}
+              <div className="bg-gradient-to-br from-pink-100 to-pink-50 dark:from-pink-900/40 dark:to-pink-900/20 border-2 border-pink-300 dark:border-pink-700 rounded-lg p-6 text-center hover:shadow-lg transition-shadow">
+                <div className="flex justify-center mb-2">
+                  <TrendingUp className="w-8 h-8 text-pink-600 dark:text-pink-400" />
+                </div>
+                <p className="text-3xl font-bold text-pink-600 dark:text-pink-400 mb-1">
+                  100+
+                </p>
+                <p className="text-sm text-gray-700 dark:text-gray-300 font-semibold">
+                  Languages
+                </p>
+              </div>
+
+              {/* Engagement Badge */}
+              <div className="bg-gradient-to-br from-green-100 to-green-50 dark:from-green-900/40 dark:to-green-900/20 border-2 border-green-300 dark:border-green-700 rounded-lg p-6 text-center hover:shadow-lg transition-shadow">
+                <div className="flex justify-center mb-2">
+                  <TrendingUp className="w-8 h-8 text-green-600 dark:text-green-400" />
+                </div>
+                <p className="text-3xl font-bold text-green-600 dark:text-green-400 mb-1">
+                  ⭐
+                </p>
+                <p className="text-sm text-gray-700 dark:text-gray-300 font-semibold">
+                  Highly Rated
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
         {/* Hero Section */}
         <section className="bg-gradient-to-br from-card to-muted/50 border-b border-border">
           <div className="container py-20 md:py-32">
@@ -106,7 +166,7 @@ export default function Home() {
         <section id="featured" className="py-20 md:py-28 border-b border-border">
           <div className="container">
             <div className="mb-12">
-              <h2 className="text-4xl font-bold mb-4">Featured Stories</h2>
+              <h2 className="text-4xl font-bold mb-4 bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400 bg-clip-text text-transparent">Featured Stories</h2>
               <p className="text-foreground/70 text-lg">
                 Our most popular and impactful articles
               </p>
@@ -169,7 +229,7 @@ export default function Home() {
           <div className="container">
             <div className="mb-12 flex items-center justify-between">
               <div>
-                <h2 className="text-4xl font-bold mb-4">Latest Articles</h2>
+                <h2 className="text-4xl font-bold mb-4 bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400 bg-clip-text text-transparent">Latest Articles</h2>
                 <p className="text-foreground/70 text-lg">
                   Fresh content from our writers
                 </p>

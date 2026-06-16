@@ -1,6 +1,6 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
-import { Menu, X, Moon, Sun } from "lucide-react";
+import { Menu, X, Moon, Sun, Search } from "lucide-react";
 import { getLoginUrl } from "@/const";
 import { useState } from "react";
 import { useLocation } from "wouter";
@@ -15,9 +15,18 @@ export default function Navigation({ categories = [] }: NavigationProps) {
   const { user, logout, isAuthenticated } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const [isOpen, setIsOpen] = useState(false);
-  const [location] = useLocation();
+  const [location, navigate] = useLocation();
+  const [searchQuery, setSearchQuery] = useState("");
 
   const isActive = (path: string) => location === path;
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      navigate(`/blog?search=${encodeURIComponent(searchQuery)}`);
+      setSearchQuery("");
+    }
+  };
 
   return (
     <nav className="sticky top-0 z-50 bg-card border-b border-border">
@@ -30,6 +39,22 @@ export default function Navigation({ categories = [] }: NavigationProps) {
             </div>
             <span className="hidden sm:inline">My Blog</span>
           </a>
+
+          {/* Search Bar - Desktop */}
+          <div className="hidden lg:flex items-center flex-1 max-w-sm mx-8">
+            <form onSubmit={handleSearch} className="w-full">
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="Search posts..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full px-4 py-2 pl-10 rounded-lg bg-muted border border-border focus:outline-none focus:ring-2 focus:ring-accent text-sm"
+                />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/50" />
+              </div>
+            </form>
+          </div>
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-8">
@@ -134,6 +159,22 @@ export default function Navigation({ categories = [] }: NavigationProps) {
                 {category.name}
               </a>
             ))}
+
+            {/* Search Bar - Mobile */}
+            <div className="px-4 py-2 border-t border-border mt-2 pt-4">
+              <form onSubmit={handleSearch} className="mb-4">
+                <div className="relative">
+                  <input
+                    type="text"
+                    placeholder="Search posts..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full px-4 py-2 pl-10 rounded-lg bg-muted border border-border focus:outline-none focus:ring-2 focus:ring-accent text-sm"
+                  />
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/50" />
+                </div>
+              </form>
+            </div>
 
             <div className="px-4 py-2 border-t border-border mt-2 pt-4 flex flex-col gap-2">
               <button
