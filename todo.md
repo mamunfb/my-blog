@@ -219,3 +219,16 @@
 - [x] 8. Add Twitter Card support
 - [x] 9. Generate language-specific keywords
 - [x] 10. Support canonical URLs for SEO
+
+
+## Phase 22: XML Sitemap and Robots.txt for Search Engine Indexing
+- [x] 1. Create dynamic XML sitemap generator (sitemapGenerator.ts)
+- [x] 2. Generate sitemap with all pages and languages
+- [x] 3. Add hreflang alternates to sitemap entries
+- [x] 4. Create robots.txt file with search engine directives
+- [x] 5. Block aggressive bots (AhrefsBot, SemrushBot, DotBot)
+- [x] 6. Add sitemap endpoints to Express server (/sitemap.xml, /robots.txt)
+- [x] 7. Add sitemap link to HTML head
+- [x] 8. Add sitemap link function to seoUtils
+- [x] 9. Support 100+ languages in sitemap alternates
+- [x] 10. Add crawl delay and request rate limits

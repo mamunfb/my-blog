@@ -263,6 +263,20 @@ export function generateSlug(title: string): string {
 }
 
 /**
+ * Add sitemap link to head
+ */
+export function addSitemapLink() {
+  let link = document.querySelector('link[rel="sitemap"]') as HTMLLinkElement | null;
+  if (!link) {
+    link = document.createElement("link");
+    link.rel = "sitemap";
+    link.type = "application/xml";
+    link.href = "/sitemap.xml";
+    document.head.appendChild(link);
+  }
+}
+
+/**
  * Get language-specific keywords
  */
 export function getLanguageKeywords(language: string, baseKeywords: string[] = []): string {

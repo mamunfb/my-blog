@@ -8,6 +8,7 @@ import { registerStorageProxy } from "./storageProxy";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
+import { generateSitemap, generateRobotsTxt } from "../sitemapGenerator";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -36,6 +37,34 @@ async function startServer() {
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
   registerStorageProxy(app);
   registerOAuthRoutes(app);
+
+  // Sitemap endpoint
+  app.get("/sitemap.xml", async (req, res) => {
+    try {
+      const protocol = req.protocol || "https";
+      const host = req.get("host") || "localhost:3000";
+      const baseUrl = `${protocol}://${host}`;
+      const sitemap = await generateSitemap(baseUrl);
+      res.type("application/xml").send(sitemap);
+    } catch (error) {
+      console.error("Error generating sitemap:", error);
+      res.status(500).send("Error generating sitemap");
+    }
+  });
+
+  // Robots.txt endpoint
+  app.get("/robots.txt", (req, res) => {
+    try {
+      const protocol = req.protocol || "https";
+      const host = req.get("host") || "localhost:3000";
+      const baseUrl = `${protocol}://${host}`;
+      const robotsTxt = generateRobotsTxt(baseUrl);
+      res.type("text/plain").send(robotsTxt);
+    } catch (error) {
+      console.error("Error generating robots.txt:", error);
+      res.status(500).send("Error generating robots.txt");
+    }
+  });
   // tRPC API
   app.use(
     "/api/trpc",

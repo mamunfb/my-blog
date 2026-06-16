@@ -1,0 +1,58 @@
+# Robots.txt for My Blog
+# This file tells search engines how to crawl and index the website
+
+# Allow all bots by default
+User-agent: *
+Allow: /
+
+# Disallow private and admin areas
+Disallow: /admin
+Disallow: /api/
+Disallow: /_next/
+Disallow: /.next/
+Disallow: /dist/
+Disallow: /node_modules/
+
+# Allow specific search engine bots
+User-agent: Googlebot
+Allow: /
+Crawl-delay: 1
+
+User-agent: Bingbot
+Allow: /
+Crawl-delay: 1
+
+User-agent: Slurp
+Allow: /
+Crawl-delay: 2
+
+User-agent: DuckDuckBot
+Allow: /
+Crawl-delay: 1
+
+# Block aggressive bots
+User-agent: AhrefsBot
+Disallow: /
+
+User-agent: SemrushBot
+Disallow: /
+
+User-agent: DotBot
+Disallow: /
+
+User-agent: MJ12bot
+Disallow: /
+
+# Crawl delay for all bots
+Crawl-delay: 1
+
+# Request rate (pages per second)
+Request-rate: 1/1s
+
+# Sitemap location
+Sitemap: /sitemap.xml
+Sitemap: /sitemap-index.xml
+
+# Comment: This robots.txt file is automatically generated
+# Last updated: 2026-06-16
+# For more information about robots.txt, visit: https://www.robotstxt.org/
