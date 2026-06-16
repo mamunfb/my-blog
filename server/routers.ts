@@ -1,11 +1,11 @@
 import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
-import { publicProcedure, router } from "./_core/trpc";
+import { protectedProcedure, publicProcedure, router } from "./_core/trpc";
 import { z } from "zod";
+import { TRPCError } from "@trpc/server";
 
 export const appRouter = router({
-    // if you need to use socket.io, read and register route in server/_core/index.ts, all api should start with '/api/' so that the gateway can route correctly
   system: systemRouter,
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
@@ -19,6 +19,7 @@ export const appRouter = router({
   }),
 
   blog: router({
+    // Public queries
     getFeaturedPosts: publicProcedure.query(async () => {
       const { getFeaturedPosts } = await import("../server/db");
       return getFeaturedPosts(3);
@@ -66,6 +67,120 @@ export const appRouter = router({
       .query(async ({ input }) => {
         const { getPostsByAuthor } = await import("../server/db");
         return getPostsByAuthor(input.authorId, input.limit);
+      }),
+
+    // Admin mutations
+    createPost: protectedProcedure
+      .input(z.object({
+        title: z.string().min(1),
+        slug: z.string().min(1),
+        excerpt: z.string().optional(),
+        content: z.string().min(1),
+        categoryId: z.number().optional(),
+        tags: z.array(z.number()).optional(),
+        status: z.enum(["draft", "published", "archived"]).default("draft"),
+        featuredImageUrl: z.string().optional(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        if (ctx.user?.role !== "admin") {
+          throw new TRPCError({ code: "FORBIDDEN" });
+        }
+        const { createPost } = await import("../server/db");
+        return createPost(input, ctx.user.id);
+      }),
+
+    updatePost: protectedProcedure
+      .input(z.object({
+        id: z.number(),
+        title: z.string().min(1).optional(),
+        slug: z.string().min(1).optional(),
+        excerpt: z.string().optional(),
+        content: z.string().min(1).optional(),
+        categoryId: z.number().optional(),
+        tags: z.array(z.number()).optional(),
+        status: z.enum(["draft", "published", "archived"]).optional(),
+        featuredImageUrl: z.string().optional(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        if (ctx.user?.role !== "admin") {
+          throw new TRPCError({ code: "FORBIDDEN" });
+        }
+        const { updatePost } = await import("../server/db");
+        return updatePost(input.id, input);
+      }),
+
+    deletePost: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input, ctx }) => {
+        if (ctx.user?.role !== "admin") {
+          throw new TRPCError({ code: "FORBIDDEN" });
+        }
+        const { deletePost } = await import("../server/db");
+        return deletePost(input.id);
+      }),
+
+    getAllPosts: protectedProcedure.query(async ({ ctx }) => {
+      if (ctx.user?.role !== "admin") {
+        throw new TRPCError({ code: "FORBIDDEN" });
+      }
+      const { getAllPosts } = await import("../server/db");
+      return getAllPosts();
+    }),
+
+    getPostById: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .query(async ({ input, ctx }) => {
+        if (ctx.user?.role !== "admin") {
+          throw new TRPCError({ code: "FORBIDDEN" });
+        }
+        const { getPostById } = await import("../server/db");
+        return getPostById(input.id);
+      }),
+    createComment: protectedProcedure
+      .input(z.object({
+        postId: z.number(),
+        content: z.string().min(1),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        if (!ctx.user) {
+          throw new TRPCError({ code: "UNAUTHORIZED" });
+        }
+        const { createComment } = await import("../server/db");
+        return createComment(input.postId, ctx.user.id, input.content);
+      }),
+    getPendingComments: protectedProcedure.query(async ({ ctx }) => {
+      if (ctx.user?.role !== "admin") {
+        throw new TRPCError({ code: "FORBIDDEN" });
+      }
+      const { getPendingComments } = await import("../server/db");
+      return getPendingComments();
+    }),
+    approveComment: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input, ctx }) => {
+        if (ctx.user?.role !== "admin") {
+          throw new TRPCError({ code: "FORBIDDEN" });
+        }
+        const { approveComment } = await import("../server/db");
+        return approveComment(input.id);
+      }),
+    rejectComment: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input, ctx }) => {
+        if (ctx.user?.role !== "admin") {
+          throw new TRPCError({ code: "FORBIDDEN" });
+        }
+        const { rejectComment } = await import("../server/db");
+        return rejectComment(input.id);
+      }),
+    deleteComment: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input, ctx }) => {
+        if (ctx.user?.role !== "admin") {
+          throw new TRPCError({ code: "FORBIDDEN" });
+        }
+        const { deleteComment } = await import("../server/db");
+        return deleteComment(input.id);
       }),
   }),
 });

@@ -1,15 +1,15 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import AdminPostList from "@/components/AdminPostList";
 import AdminPostEditor from "@/components/AdminPostEditor";
-import { useState } from "react";
+import AdminCommentModeration from "@/components/AdminCommentModeration";
 
 export default function AdminDashboard() {
   const { user, isAuthenticated } = useAuth();
   const [, navigate] = useLocation();
-  const [currentView, setCurrentView] = useState<"list" | "create" | "edit">(
+  const [currentView, setCurrentView] = useState<"list" | "create" | "edit" | "comments">(
     "list"
   );
   const [selectedPostId, setSelectedPostId] = useState<number | null>(null);
@@ -54,6 +54,12 @@ export default function AdminDashboard() {
           >
             Create Post
           </Button>
+          <Button
+            variant={currentView === "comments" ? "default" : "outline"}
+            onClick={() => setCurrentView("comments")}
+          >
+            Moderate Comments
+          </Button>
         </div>
       </nav>
 
@@ -83,6 +89,9 @@ export default function AdminDashboard() {
               setSelectedPostId(null);
             }}
           />
+        )}
+        {currentView === "comments" && (
+          <AdminCommentModeration />
         )}
       </main>
     </div>

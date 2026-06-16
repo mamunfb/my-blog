@@ -233,3 +233,240 @@ export async function getAuthorPosts(userId: number) {
   
   return result;
 }
+
+
+// Admin functions for post management
+export async function createPost(input: {
+  title: string;
+  slug: string;
+  excerpt?: string;
+  content: string;
+  categoryId?: number;
+  tags?: number[];
+  status?: "draft" | "published" | "archived";
+  featuredImageUrl?: string;
+}, authorId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  try {
+    await db.insert(posts).values({
+      title: input.title,
+      slug: input.slug,
+      excerpt: input.excerpt,
+      content: input.content,
+      categoryId: input.categoryId,
+      authorId,
+      published: input.status || "draft",
+      featuredImageUrl: input.featuredImageUrl,
+      publishedAt: input.status === "published" ? new Date() : null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+
+    // Get the created post
+    const createdPost = await db
+      .select()
+      .from(posts)
+      .where(eq(posts.slug, input.slug))
+      .limit(1);
+
+    const postId = createdPost[0]?.id;
+
+    // Add tags if provided
+    if (input.tags && input.tags.length > 0 && postId) {
+      await db.insert(postTags).values(
+        input.tags.map(tagId => ({
+          postId,
+          tagId,
+        }))
+      );
+    }
+
+    return { id: postId, ...input };
+  } catch (error) {
+    console.error("[Database] Failed to create post:", error);
+    throw error;
+  }
+}
+
+export async function updatePost(postId: number, input: {
+  title?: string;
+  slug?: string;
+  excerpt?: string;
+  content?: string;
+  categoryId?: number;
+  tags?: number[];
+  status?: "draft" | "published" | "archived";
+  featuredImageUrl?: string;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  try {
+    const updateData: any = {
+      updatedAt: new Date(),
+    };
+
+    if (input.title !== undefined) updateData.title = input.title;
+    if (input.slug !== undefined) updateData.slug = input.slug;
+    if (input.excerpt !== undefined) updateData.excerpt = input.excerpt;
+    if (input.content !== undefined) updateData.content = input.content;
+    if (input.categoryId !== undefined) updateData.categoryId = input.categoryId;
+    if (input.status !== undefined) {
+      updateData.published = input.status;
+      if (input.status === "published") {
+        updateData.publishedAt = new Date();
+      }
+    }
+    if (input.featuredImageUrl !== undefined) updateData.featuredImageUrl = input.featuredImageUrl;
+
+    await db.update(posts).set(updateData).where(eq(posts.id, postId));
+
+    // Update tags if provided
+    if (input.tags !== undefined) {
+      await db.delete(postTags).where(eq(postTags.postId, postId));
+      if (input.tags.length > 0) {
+        await db.insert(postTags).values(
+          input.tags.map(tagId => ({
+            postId,
+            tagId,
+          }))
+        );
+      }
+    }
+
+    return { id: postId, ...input };
+  } catch (error) {
+    console.error("[Database] Failed to update post:", error);
+    throw error;
+  }
+}
+
+export async function deletePost(postId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  try {
+    // Delete associated tags
+    await db.delete(postTags).where(eq(postTags.postId, postId));
+    // Delete associated comments
+    await db.delete(comments).where(eq(comments.postId, postId));
+    // Delete the post
+    await db.delete(posts).where(eq(posts.id, postId));
+
+    return { success: true };
+  } catch (error) {
+    console.error("[Database] Failed to delete post:", error);
+    throw error;
+  }
+}
+
+export async function getAllPosts() {
+  const db = await getDb();
+  if (!db) return [];
+
+  const result = await db
+    .select()
+    .from(posts)
+    .orderBy(desc(posts.createdAt));
+
+  return result;
+}
+
+export async function getPostById(postId: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+
+  const result = await db
+    .select()
+    .from(posts)
+    .where(eq(posts.id, postId))
+    .limit(1);
+
+  return result.length > 0 ? result[0] : undefined;
+}
+
+
+export async function createComment(postId: number, userId: number, content: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  try {
+    const result = await db.insert(comments).values({
+      postId,
+      userId,
+      content,
+      approved: "pending",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+
+    return { success: true, message: "Comment submitted for moderation" };
+  } catch (error) {
+    console.error("[Database] Failed to create comment:", error);
+    throw error;
+  }
+}
+
+
+export async function getPendingComments() {
+  const db = await getDb();
+  if (!db) return [];
+
+  const result = await db
+    .select()
+    .from(comments)
+    .where(eq(comments.approved, "pending"))
+    .orderBy(desc(comments.createdAt));
+
+  return result;
+}
+
+export async function approveComment(commentId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  try {
+    await db
+      .update(comments)
+      .set({ approved: "approved", updatedAt: new Date() })
+      .where(eq(comments.id, commentId));
+
+    return { success: true };
+  } catch (error) {
+    console.error("[Database] Failed to approve comment:", error);
+    throw error;
+  }
+}
+
+export async function rejectComment(commentId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  try {
+    await db
+      .update(comments)
+      .set({ approved: "rejected", updatedAt: new Date() })
+      .where(eq(comments.id, commentId));
+
+    return { success: true };
+  } catch (error) {
+    console.error("[Database] Failed to reject comment:", error);
+    throw error;
+  }
+}
+
+export async function deleteComment(commentId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  try {
+    await db.delete(comments).where(eq(comments.id, commentId));
+
+    return { success: true };
+  } catch (error) {
+    console.error("[Database] Failed to delete comment:", error);
+    throw error;
+  }
+}

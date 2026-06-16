@@ -1,16 +1,32 @@
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Edit, Trash2, Eye, EyeOff } from "lucide-react";
+import { Edit, Trash2 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
+import { trpc } from "@/lib/trpc";
+import { toast } from "sonner";
 
 interface AdminPostListProps {
   onEdit: (postId: number) => void;
 }
 
 export default function AdminPostList({ onEdit }: AdminPostListProps) {
-  const [posts] = useState([]);
-  const [isLoading] = useState(false);
+  const { data: posts = [], isLoading } = trpc.blog.getAllPosts.useQuery();
+    const utils = trpc.useUtils();
+  const deletePostMutation = trpc.blog.deletePost.useMutation({
+    onSuccess: () => {
+      toast.success("Post deleted successfully");
+      utils.blog.getAllPosts.invalidate();
+    },
+    onError: () => {
+      toast.error("Failed to delete post");
+    },
+  });
+
+  const handleDelete = (postId: number) => {
+    if (confirm("Are you sure you want to delete this post?")) {
+      deletePostMutation.mutate({ id: postId });
+    }
+  };
 
   return (
     <div>
@@ -48,7 +64,7 @@ export default function AdminPostList({ onEdit }: AdminPostListProps) {
               </tr>
             </thead>
             <tbody>
-              {posts.map((post: any) => (
+              {posts.map((post) => (
                 <tr key={post.id} className="border-b border-border hover:bg-muted/50">
                   <td className="px-6 py-4 font-medium">{post.title}</td>
                   <td className="px-6 py-4">
@@ -67,7 +83,7 @@ export default function AdminPostList({ onEdit }: AdminPostListProps) {
                       addSuffix: true,
                     })}
                   </td>
-                  <td className="px-6 py-4 text-sm">{post.viewCount}</td>
+                  <td className="px-6 py-4 text-sm">{post.viewCount || 0}</td>
                   <td className="px-6 py-4">
                     <div className="flex gap-2">
                       <Button
@@ -81,6 +97,8 @@ export default function AdminPostList({ onEdit }: AdminPostListProps) {
                         variant="outline"
                         size="sm"
                         className="text-destructive"
+                        onClick={() => handleDelete(post.id)}
+                        disabled={deletePostMutation.isPending}
                       >
                         <Trash2 className="w-4 h-4" />
                       </Button>

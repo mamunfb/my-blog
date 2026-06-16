@@ -18,14 +18,14 @@
 - [ ] Implement rich text editor integration (TipTap or similar)
 - [x] Build post creation form with title, content, category, tags, featured image
 - [x] Build post editing interface
-- [ ] Build post deletion with confirmation
+- [x] Build post deletion with confirmation
 - [ ] Implement category and tag management
 
 ## Phase 4: Comments System
 - [x] Create comments database schema
 - [x] Build comment display component on post pages
-- [ ] Implement comment submission form (auth-gated)
-- [ ] Add comment moderation in admin panel
+- [x] Implement comment submission form (auth-gated)
+- [x] Add comment moderation in admin panel
 - [ ] Implement nested replies (optional enhancement)
 
 ## Phase 5: Search & Filters

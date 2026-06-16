@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -26,8 +26,28 @@ export default function AdminPostEditor({ postId, onSave }: AdminPostEditorProps
   const [categoryId, setCategoryId] = useState<string>("");
   const [status, setStatus] = useState("draft");
   const [isSaving, setIsSaving] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const { data: categories } = trpc.blog.getAllCategories.useQuery();
+  const { data: existingPost } = trpc.blog.getPostById.useQuery(
+    { id: postId || 0 },
+    { enabled: !!postId }
+  );
+
+  const createPostMutation = trpc.blog.createPost.useMutation();
+  const updatePostMutation = trpc.blog.updatePost.useMutation();
+
+  // Load existing post data
+  useEffect(() => {
+    if (existingPost && postId) {
+      setTitle(existingPost.title);
+      setSlug(existingPost.slug);
+      setExcerpt(existingPost.excerpt || "");
+      setContent(existingPost.content);
+      setCategoryId(existingPost.categoryId?.toString() || "");
+      setStatus(existingPost.published || "draft");
+    }
+  }, [existingPost, postId]);
 
   const handleSave = async () => {
     if (!title.trim() || !slug.trim() || !content.trim()) {
@@ -37,11 +57,32 @@ export default function AdminPostEditor({ postId, onSave }: AdminPostEditorProps
 
     setIsSaving(true);
     try {
-      // TODO: Implement save logic via tRPC
-      toast.success(postId ? "Post updated successfully" : "Post created successfully");
+      if (postId) {
+        await updatePostMutation.mutateAsync({
+          id: postId,
+          title,
+          slug,
+          excerpt,
+          content,
+          categoryId: categoryId ? parseInt(categoryId) : undefined,
+          status: status as "draft" | "published" | "archived",
+        });
+        toast.success("Post updated successfully");
+      } else {
+        await createPostMutation.mutateAsync({
+          title,
+          slug,
+          excerpt,
+          content,
+          categoryId: categoryId ? parseInt(categoryId) : undefined,
+          status: status as "draft" | "published" | "archived",
+        });
+        toast.success("Post created successfully");
+      }
       onSave();
     } catch (error) {
       toast.error("Failed to save post");
+      console.error(error);
     } finally {
       setIsSaving(false);
     }
@@ -54,6 +95,14 @@ export default function AdminPostEditor({ postId, onSave }: AdminPostEditorProps
       .replace(/\s+/g, "-")
       .replace(/-+/g, "-");
   };
+
+  if (postId && isLoading) {
+    return (
+      <div className="max-w-4xl">
+        <p>Loading post...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-4xl">
@@ -154,8 +203,15 @@ export default function AdminPostEditor({ postId, onSave }: AdminPostEditorProps
 
         {/* Actions */}
         <div className="flex gap-4 pt-4 border-t border-border">
-          <Button onClick={handleSave} disabled={isSaving}>
-            {isSaving ? "Saving..." : postId ? "Update Post" : "Create Post"}
+          <Button 
+            onClick={handleSave} 
+            disabled={isSaving || createPostMutation.isPending || updatePostMutation.isPending}
+          >
+            {isSaving || createPostMutation.isPending || updatePostMutation.isPending
+              ? "Saving..."
+              : postId
+              ? "Update Post"
+              : "Create Post"}
           </Button>
           <Button variant="outline" onClick={onSave}>
             Cancel

@@ -35,6 +35,19 @@ export default function BlogPost() {
       { postId: post?.id || 0 },
       { enabled: !!post?.id }
     );
+  const utils = trpc.useUtils();
+  const createCommentMutation = trpc.blog.createComment.useMutation({
+    onSuccess: () => {
+      toast.success("Comment submitted for moderation");
+      setCommentText("");
+      if (post?.id) {
+        utils.blog.getPostComments.invalidate({ postId: post.id });
+      }
+    },
+    onError: () => {
+      toast.error("Failed to submit comment");
+    },
+  });
 
   if (!params?.slug) {
     return (
@@ -205,13 +218,17 @@ export default function BlogPost() {
                     rows={4}
                   />
                   <Button
-                    disabled={!commentText.trim()}
+                    disabled={!commentText.trim() || createCommentMutation.isPending}
                     onClick={() => {
-                      toast.success("Comment submitted for moderation");
-                      setCommentText("");
+                      if (post?.id) {
+                        createCommentMutation.mutate({
+                          postId: post.id,
+                          content: commentText,
+                        });
+                      }
                     }}
                   >
-                    Post Comment
+                    {createCommentMutation.isPending ? "Posting..." : "Post Comment"}
                   </Button>
                 </div>
               ) : (
