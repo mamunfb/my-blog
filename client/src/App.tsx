@@ -10,6 +10,7 @@ import BlogListing from "./pages/BlogListing";
 import BlogPost from "./pages/BlogPost";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminPanel from "./pages/AdminPanel";
+import FeaturesShowcase from "./pages/FeaturesShowcase";
 import { Footer } from "./components/Footer";
 
 function Router() {
@@ -19,6 +20,7 @@ function Router() {
       <main className="flex-grow">
         <Switch>
           <Route path={"/"} component={Home} />
+          <Route path={"/features"} component={FeaturesShowcase} />
           <Route path={"/blog"} component={BlogListing} />
           <Route path={"/blog/:slug"} component={BlogPost} />
           <Route path={"/admin"} component={AdminPanel} />

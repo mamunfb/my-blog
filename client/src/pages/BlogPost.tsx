@@ -15,6 +15,9 @@ import TagCloud from "@/components/TagCloud";
 import {
   Calendar,
   User,
+  Heart,
+  MessageCircle,
+  Share2,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { useState, useEffect } from "react";
@@ -103,7 +106,7 @@ export default function BlogPost() {
 
   if (!params?.slug) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-gradient-to-br from-background via-blue-50/30 to-purple-50/30 dark:from-background dark:via-blue-950/20 dark:to-purple-950/20">
         <Navigation categories={categories} />
         <div className="container py-20 text-center">
           <p className="text-foreground/70">Post not found</p>
@@ -116,7 +119,7 @@ export default function BlogPost() {
   const shareTitle = post?.title || "Check out this article";
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gradient-to-br from-background via-blue-50/30 to-purple-50/30 dark:from-background dark:via-blue-950/20 dark:to-purple-950/20">
       <Navigation categories={categories} />
 
       {postLoading ? (
@@ -132,14 +135,15 @@ export default function BlogPost() {
         <>
           {/* Hero Section */}
           {post.featuredImageUrl && (
-            <div className="w-full h-96 md:h-[500px] bg-muted overflow-hidden">
+            <div className="w-full h-96 md:h-[500px] bg-gradient-to-br from-blue-400 to-purple-500 overflow-hidden relative">
               <img
                 src={getOptimizedImageUrl(post.featuredImageUrl, { width: 1200, quality: 80 })}
                 alt={post.title}
                 loading="lazy"
                 decoding="async"
-                className="w-full h-full object-cover"
+                className="w-full h-full object-cover opacity-90 hover:opacity-100 transition-opacity"
               />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
             </div>
           )}
 
@@ -158,20 +162,36 @@ export default function BlogPost() {
           <article className="container-narrow py-12 md:py-16">
             {/* Header */}
             <header className="mb-8">
-              <h1 className="text-5xl font-bold mb-4">{post.title}</h1>
+              <h1 className="text-5xl font-bold mb-4 bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400 bg-clip-text text-transparent">{post.title}</h1>
 
-              <div className="flex flex-wrap items-center gap-6 text-foreground/70 mb-6 pb-6 border-b border-border">
-                <span className="flex items-center gap-2">
+              {/* FEATURE 1: Author Info Card */}
+              <div className="mb-8 p-6 bg-gradient-to-r from-blue-100 to-cyan-100 dark:from-blue-900/40 dark:to-cyan-900/40 rounded-lg border-2 border-blue-300 dark:border-blue-700 shadow-lg">
+                <div className="flex items-center gap-4">
+                  <div className="w-14 h-14 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-white font-bold text-lg shadow-md">
+                    {post?.authorId ? String(post.authorId).charAt(0).toUpperCase() : 'A'}
+                  </div>
+                  <div>
+                    <p className="font-semibold text-gray-900 dark:text-white text-lg">By Author</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Published {post?.publishedAt ? formatDistanceToNow(new Date(post.publishedAt), { addSuffix: true }) : 'Recently'}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* FEATURE 2: Reading Time + Meta Info */}
+              <div className="flex flex-wrap items-center gap-4 text-sm mb-6 pb-6 border-b-2 border-gradient-to-r from-blue-300 to-purple-300 dark:border-blue-700">
+                <span className="flex items-center gap-2 px-3 py-1 bg-amber-100 dark:bg-amber-900/40 rounded-full text-amber-700 dark:text-amber-300 font-semibold">
+                  <ReadingTime content={post.content} />
+                </span>
+                <span className="flex items-center gap-2 px-3 py-1 bg-green-100 dark:bg-green-900/40 rounded-full text-green-700 dark:text-green-300 font-semibold">
                   <Calendar className="w-4 h-4" />
                   {formatDistanceToNow(new Date(post.publishedAt || post.createdAt), {
                     addSuffix: true,
                   })}
                 </span>
-                <span className="flex items-center gap-2">
+                <span className="flex items-center gap-2 px-3 py-1 bg-pink-100 dark:bg-pink-900/40 rounded-full text-pink-700 dark:text-pink-300 font-semibold">
                   <User className="w-4 h-4" />
                   By Author
                 </span>
-                <ReadingTime content={post.content} />
               </div>
             </header>
 
@@ -179,9 +199,11 @@ export default function BlogPost() {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               {/* Main Content */}
               <div className="lg:col-span-2">
-                {/* Table of Contents */}
+                {/* FEATURE 3: Table of Contents */}
                 {post.content && post.content.length > 2000 && (
-                  <TableOfContents content={post.content} className="mb-8" />
+                  <div className="mb-8 p-4 bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/30 rounded-lg border-2 border-amber-300 dark:border-amber-700 shadow-md">
+                    <TableOfContents content={post.content} className="text-amber-900 dark:text-amber-100" />
+                  </div>
                 )}
 
                 {/* Content */}
@@ -193,17 +215,29 @@ export default function BlogPost() {
                 </div>
 
                 {/* Social Share */}
-                <div className="py-8 border-t border-b border-border mb-12">
+                <div className="py-8 border-t-2 border-b-2 border-gradient-to-r from-pink-300 to-rose-300 dark:border-pink-700 mb-12 bg-gradient-to-r from-pink-50 to-rose-50 dark:from-pink-950/20 dark:to-rose-950/20 p-6 rounded-lg">
+                  <h3 className="font-semibold mb-4 text-gray-900 dark:text-white flex items-center gap-2">
+                    <Share2 className="w-5 h-5 text-pink-600 dark:text-pink-400" />
+                    Share this article
+                  </h3>
                   <EnhancedSocialShare title={shareTitle} url={shareUrl} excerpt={post.excerpt || ''} />
                 </div>
 
-                {/* Post Rating */}
-                <div className="mb-12">
+                {/* FEATURE 4: Post Rating */}
+                <div className="mb-12 p-6 bg-gradient-to-r from-green-100 to-emerald-100 dark:from-green-900/40 dark:to-emerald-900/40 rounded-lg border-2 border-green-300 dark:border-green-700 shadow-md">
+                  <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white flex items-center gap-2">
+                    <Heart className="w-5 h-5 text-red-500" />
+                    Did you find this helpful?
+                  </h3>
                   <PostRating postId={post.id} initialLikes={0} />
                 </div>
 
-                {/* Comments Section */}
-                <section className="mb-12">
+                {/* FEATURE 5: Comments Section */}
+                <section className="mb-12 p-6 bg-gradient-to-r from-purple-100 to-indigo-100 dark:from-purple-900/40 dark:to-indigo-900/40 rounded-lg border-2 border-purple-300 dark:border-purple-700 shadow-md">
+                  <h2 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white flex items-center gap-2">
+                    <MessageCircle className="w-6 h-6 text-purple-600 dark:text-purple-400" />
+                    Comments ({comments?.length || 0})
+                  </h2>
                   <CommentSection
                     postId={post?.id || 0}
                     comments={(comments || []).map((c) => ({
@@ -236,25 +270,63 @@ export default function BlogPost() {
                       }
                     }}
                     onCommentDelete={async (commentId) => {
-                      // Implement delete functionality
                       toast.error("Delete functionality coming soon");
                     }}
                   />
                 </section>
+
+                {/* FEATURE 6: Newsletter Subscription */}
+                <section className="mb-12 p-8 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 dark:from-indigo-700 dark:via-purple-700 dark:to-pink-700 rounded-lg text-white shadow-xl border-2 border-indigo-400 dark:border-indigo-600">
+                  <h2 className="text-2xl font-bold mb-4">📧 Subscribe to Our Newsletter</h2>
+                  <p className="mb-6 text-indigo-100">Get the latest articles delivered to your inbox every week.</p>
+                  <div className="flex gap-2 flex-col sm:flex-row">
+                    <input
+                      type="email"
+                      placeholder="Enter your email"
+                      className="flex-1 px-4 py-3 rounded-lg text-gray-900 dark:text-white bg-white dark:bg-gray-800 border-2 border-indigo-300 dark:border-indigo-600 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    />
+                    <Button className="bg-white text-indigo-600 hover:bg-indigo-50 dark:bg-gray-800 dark:text-indigo-400 dark:hover:bg-gray-700 font-semibold px-6 border-2 border-white dark:border-gray-700">
+                      Subscribe
+                    </Button>
+                  </div>
+                </section>
               </div>
 
               {/* Sidebar */}
-              <aside className="lg:col-span-1">
-                {/* Popular Posts Widget */}
-                <div className="bg-card border border-border rounded-lg p-6 mb-6">
-                  <h3 className="font-bold text-lg mb-4">Popular Posts</h3>
+              <aside className="lg:col-span-1 space-y-6">
+                {/* FEATURE 7: Popular Posts Widget */}
+                <div className="bg-gradient-to-br from-cyan-100 to-blue-100 dark:from-cyan-900/40 dark:to-blue-900/40 border-2 border-cyan-300 dark:border-cyan-700 rounded-lg p-6 shadow-lg hover:shadow-xl transition-shadow">
+                  <h3 className="font-bold text-lg mb-4 text-gray-900 dark:text-white flex items-center gap-2">
+                    🔥 Popular Posts
+                  </h3>
                   <PopularPosts limit={5} />
                 </div>
 
-                {/* Tag Cloud */}
-                <div className="bg-card border border-border rounded-lg p-6">
-                  <h3 className="font-bold text-lg mb-4">Tags</h3>
+                {/* FEATURE 8: Tag Cloud Widget */}
+                <div className="bg-gradient-to-br from-pink-100 to-rose-100 dark:from-pink-900/40 dark:to-rose-900/40 border-2 border-pink-300 dark:border-pink-700 rounded-lg p-6 shadow-lg hover:shadow-xl transition-shadow">
+                  <h3 className="font-bold text-lg mb-4 text-gray-900 dark:text-white flex items-center gap-2">
+                    🏷️ Popular Tags
+                  </h3>
                   <TagCloud />
+                </div>
+
+                {/* Bonus: Quick Stats */}
+                <div className="bg-gradient-to-br from-orange-100 to-yellow-100 dark:from-orange-900/40 dark:to-yellow-900/40 border-2 border-orange-300 dark:border-orange-700 rounded-lg p-6 shadow-lg">
+                  <h3 className="font-bold text-lg mb-4 text-gray-900 dark:text-white">📊 Article Stats</h3>
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center p-2 bg-white/50 dark:bg-gray-800/50 rounded">
+                      <span className="text-sm text-gray-700 dark:text-gray-300">Views</span>
+                      <span className="font-bold text-orange-600 dark:text-orange-400">{post.viewCount || 0}</span>
+                    </div>
+                    <div className="flex justify-between items-center p-2 bg-white/50 dark:bg-gray-800/50 rounded">
+                      <span className="text-sm text-gray-700 dark:text-gray-300">Comments</span>
+                      <span className="font-bold text-orange-600 dark:text-orange-400">{comments?.length || 0}</span>
+                    </div>
+                    <div className="flex justify-between items-center p-2 bg-white/50 dark:bg-gray-800/50 rounded">
+                      <span className="text-sm text-gray-700 dark:text-gray-300">Reading Time</span>
+                      <span className="font-bold text-orange-600 dark:text-orange-400">{Math.ceil((post.content?.length || 0) / 200)} min</span>
+                    </div>
+                  </div>
                 </div>
               </aside>
             </div>
@@ -267,9 +339,9 @@ export default function BlogPost() {
       )}
 
       {/* Footer */}
-      <footer className="bg-card border-t border-border py-12 mt-12">
-        <div className="container text-center text-sm text-foreground/60">
-          <p>&copy; 2026 My Blog. All rights reserved.</p>
+      <footer className="bg-gradient-to-r from-gray-900 to-gray-800 dark:from-gray-950 dark:to-gray-900 border-t-4 border-gradient-to-r from-blue-500 to-purple-500 py-12 mt-12">
+        <div className="container text-center text-sm text-gray-300">
+          <p>&copy; 2026 My Blog. All rights reserved. ✨</p>
         </div>
       </footer>
     </div>
