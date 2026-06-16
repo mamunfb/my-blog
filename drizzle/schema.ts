@@ -139,3 +139,19 @@ export const postDrafts = mysqlTable("postDrafts", {
 
 export type PostDraft = typeof postDrafts.$inferSelect;
 export type InsertPostDraft = typeof postDrafts.$inferInsert;
+
+
+// Newsletter Subscribers Table
+export const newsletterSubscribers = mysqlTable("newsletter_subscribers", {
+  id: int("id").autoincrement().primaryKey(),
+  email: varchar("email", { length: 320 }).notNull().unique(),
+  name: text("name"),
+  subscribedAt: timestamp("subscribed_at").defaultNow().notNull(),
+  unsubscribedAt: timestamp("unsubscribed_at"),
+  isActive: int("is_active").notNull().default(1),
+  language: varchar("language", { length: 10 }).default("en"),
+  preferences: varchar("preferences", { length: 50 }).default("all"),
+});
+
+export type NewsletterSubscriber = typeof newsletterSubscribers.$inferSelect;
+export type InsertNewsletterSubscriber = typeof newsletterSubscribers.$inferInsert;

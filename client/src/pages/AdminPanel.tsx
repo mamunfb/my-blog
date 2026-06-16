@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import AnalyticsDashboard from "@/components/AnalyticsDashboard";
 import PostListingTable from "@/components/PostListingTable";
 import ImageUpload from "@/components/ImageUpload";
+import SocialSharingMetricsDashboard from "@/components/SocialSharingMetricsDashboard";
 import { useAutoSaveDraft } from "@/hooks/useAutoSaveDraft";
 import { useEffect } from "react";
 
@@ -160,9 +161,10 @@ export default function AdminPanel() {
       {/* Main Content */}
       <div className="container py-8">
         <Tabs value={currentTab || "posts"} className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="posts">Blog Posts</TabsTrigger>
             <TabsTrigger value="analytics">Analytics</TabsTrigger>
+            <TabsTrigger value="sharing">Social Sharing</TabsTrigger>
             <TabsTrigger value="settings">Settings</TabsTrigger>
           </TabsList>
 
@@ -331,6 +333,11 @@ export default function AdminPanel() {
           {/* Analytics Tab */}
           <TabsContent value="analytics" className="space-y-6">
             <AnalyticsDashboard />
+          </TabsContent>
+
+          {/* Social Sharing Metrics Tab */}
+          <TabsContent value="sharing" className="space-y-6">
+            <SocialSharingMetricsDashboard />
           </TabsContent>
 
           {/* Settings Tab */}
