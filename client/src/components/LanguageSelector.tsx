@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
-import { Globe } from "lucide-react";
+import { Globe, Search, X } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
 import {
   SUPPORTED_LANGUAGES,
   getSupportedLanguages,
@@ -16,6 +17,8 @@ import {
 export default function LanguageSelector() {
   const [currentLanguage, setCurrentLanguage] = useState<string>("en");
   const [isLoading, setIsLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
     // Detect user's language on mount
@@ -29,9 +32,19 @@ export default function LanguageSelector() {
   const handleLanguageChange = (lang: string) => {
     setCurrentLanguage(lang);
     setPreferredLanguage(lang);
+    setSearchQuery("");
+    setIsOpen(false);
     // Reload page to apply translations
     window.location.reload();
   };
+
+  const allLanguages = getSupportedLanguages();
+  const filteredLanguages = allLanguages.filter(
+    (lang) =>
+      lang.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      lang.nativeName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      lang.code.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   if (isLoading) {
     return (
@@ -45,7 +58,7 @@ export default function LanguageSelector() {
     SUPPORTED_LANGUAGES[currentLanguage as keyof typeof SUPPORTED_LANGUAGES];
 
   return (
-    <DropdownMenu>
+    <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
       <DropdownMenuTrigger asChild>
         <button
           className="flex items-center gap-2 px-3 py-2 hover:bg-accent/10 rounded transition-colors text-sm"
@@ -58,28 +71,63 @@ export default function LanguageSelector() {
           <Globe className="w-4 h-4 sm:hidden" />
         </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-56 max-h-96 overflow-y-auto">
-        <div className="px-2 py-1.5 text-xs font-semibold text-foreground/70">
-          Select Language
-        </div>
-        {getSupportedLanguages().map((lang) => (
-          <DropdownMenuItem
-            key={lang.code}
-            onClick={() => handleLanguageChange(lang.code)}
-            className={`cursor-pointer ${
-              currentLanguage === lang.code ? "bg-accent/20" : ""
-            }`}
-          >
-            <span className="text-lg mr-2">{lang.flag}</span>
-            <div className="flex flex-col">
-              <span className="font-medium text-sm">{lang.name}</span>
-              <span className="text-xs text-foreground/60">{lang.nativeName}</span>
-            </div>
-            {currentLanguage === lang.code && (
-              <span className="ml-auto text-accent">✓</span>
+      <DropdownMenuContent align="end" className="w-64 p-0">
+        {/* Search Input */}
+        <div className="sticky top-0 bg-background border-b p-2 z-10">
+          <div className="relative">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search languages..."
+              className="pl-8 h-8 text-sm"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              autoFocus
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery("")}
+                className="absolute right-2.5 top-2.5 text-muted-foreground hover:text-foreground"
+              >
+                <X className="h-4 w-4" />
+              </button>
             )}
-          </DropdownMenuItem>
-        ))}
+          </div>
+        </div>
+
+        {/* Language List */}
+        <div className="max-h-80 overflow-y-auto">
+          {filteredLanguages.length > 0 ? (
+            filteredLanguages.map((lang) => (
+              <DropdownMenuItem
+                key={lang.code}
+                onClick={() => handleLanguageChange(lang.code)}
+                className={`cursor-pointer px-3 py-2 ${
+                  currentLanguage === lang.code ? "bg-accent/20" : ""
+                }`}
+              >
+                <span className="text-lg mr-2">{lang.flag}</span>
+                <div className="flex flex-col flex-1">
+                  <span className="font-medium text-sm">{lang.name}</span>
+                  <span className="text-xs text-foreground/60">
+                    {lang.nativeName}
+                  </span>
+                </div>
+                {currentLanguage === lang.code && (
+                  <span className="ml-auto text-accent text-sm">✓</span>
+                )}
+              </DropdownMenuItem>
+            ))
+          ) : (
+            <div className="px-3 py-8 text-center text-sm text-muted-foreground">
+              No languages found
+            </div>
+          )}
+        </div>
+
+        {/* Language Count */}
+        <div className="border-t px-3 py-1.5 text-xs text-muted-foreground text-center">
+          {filteredLanguages.length} of {allLanguages.length} languages
+        </div>
       </DropdownMenuContent>
     </DropdownMenu>
   );
