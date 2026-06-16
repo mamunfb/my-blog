@@ -17,13 +17,22 @@ import {
   User,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { useLanguageTracking } from "@/hooks/useLanguageTracking";
+import { useTranslation } from "@/contexts/TranslationContext";
+import {
+  setMetaTags,
+  setHrefLangLinks,
+  generateBlogPostSchema,
+  setStructuredData,
+  getLanguageKeywords,
+} from "@/lib/seoUtils";
 
 export default function BlogPost() {
   const [, params] = useRoute("/blog/:slug");
   const [commentText, setCommentText] = useState("");
+  const { language } = useTranslation();
   useLanguageTracking(undefined); // Will be updated when post loads
 
   const { user, isAuthenticated } = useAuth();
@@ -50,6 +59,44 @@ export default function BlogPost() {
       toast.error("Failed to submit comment");
     },
   });
+
+  // Set SEO meta tags when post loads
+  useEffect(() => {
+    if (!post) return;
+
+    const baseUrl = `${window.location.origin}/blog/${post.slug}`;
+    const keywords = getLanguageKeywords(language, [
+      post.title,
+    ]);
+
+    setMetaTags({
+      title: `${post.title} | My Blog`,
+      description: post.excerpt || post.content?.substring(0, 160) || "",
+      keywords,
+      author: "My Blog",
+      image: post.featuredImageUrl || undefined,
+      url: baseUrl,
+      type: "article",
+      publishedDate: post.publishedAt?.toISOString(),
+      modifiedDate: post.updatedAt?.toISOString(),
+      language,
+    });
+
+    setHrefLangLinks(baseUrl);
+
+    const schema = generateBlogPostSchema({
+      title: post.title,
+      description: post.excerpt || post.content?.substring(0, 160) || "",
+      content: post.content,
+      author: "My Blog",
+      publishedDate: post.publishedAt?.toISOString() || new Date().toISOString(),
+      modifiedDate: post.updatedAt?.toISOString(),
+      image: post.featuredImageUrl || undefined,
+      url: baseUrl,
+      language,
+    });
+    setStructuredData(schema);
+  }, [post, language]);
 
   if (!params?.slug) {
     return (
