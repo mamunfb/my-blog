@@ -5,6 +5,7 @@ import { getLoginUrl } from "@/const";
 import { useState } from "react";
 import { useLocation } from "wouter";
 import { useTheme } from "@/contexts/ThemeContext";
+import LanguageSelector from "./LanguageSelector";
 
 interface NavigationProps {
   categories?: Array<{ id: number; name: string; slug: string }>;
@@ -58,8 +59,9 @@ export default function Navigation({ categories = [] }: NavigationProps) {
             ))}
           </div>
 
-          {/* Theme Toggle & Auth Buttons */}
-          <div className="hidden md:flex items-center gap-4">
+          {/* Theme Toggle, Language Selector & Auth Buttons */}
+          <div className="hidden md:flex items-center gap-2">
+            <LanguageSelector />
             <button
               onClick={toggleTheme}
               className="p-2 rounded-lg hover:bg-muted transition-colors"
