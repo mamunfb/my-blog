@@ -53,164 +53,174 @@ export default function BlogListing() {
     }
 
     return sorted;
-  }, [searchQuery, selectedCategory, latestPosts, searchResults, sortBy]);
-
-  const isLoading_ = searchQuery.length > 0 ? searchLoading : isLoading;
+  }, [latestPosts, searchResults, searchQuery, selectedCategory, sortBy]);
 
   return (
     <div className="min-h-screen bg-background">
-      <Navigation categories={categories} />
+      <Navigation />
 
-      {/* Header */}
-      <section className="bg-gradient-to-br from-card to-muted/50 border-b border-border py-12 md:py-16">
-        <div className="container">
-          <h1 className="text-4xl md:text-5xl font-bold mb-4">All Articles</h1>
+      <main className="max-w-6xl mx-auto px-4 py-12">
+        {/* Header */}
+        <div className="mb-12">
+          <h1 className="text-4xl font-bold mb-4">Blog Posts</h1>
           <p className="text-foreground/70 text-lg">
-            Discover our complete collection of articles, guides, and stories
+            Explore our latest articles and insights
           </p>
         </div>
-      </section>
 
-      {/* Search and Filters */}
-      <section className="bg-card border-b border-border sticky top-16 z-40">
-        <div className="container py-6">
-          <div className="flex flex-col gap-4">
-            {/* Search */}
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-foreground/40" />
-              <Input
-                type="text"
-                placeholder="Search articles..."
-                value={searchQuery}
-                onChange={(e) => {
-                  setSearchQuery(e.target.value);
-                  setPage(0);
-                }}
-                className="pl-10"
-              />
-            </div>
+        {/* Search and Filters */}
+        <div className="space-y-4 mb-8">
+          <div className="relative">
+            <Search className="absolute left-3 top-3 w-5 h-5 text-foreground/50" />
+            <Input
+              placeholder="Search posts..."
+              value={searchQuery}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setPage(0);
+              }}
+              className="pl-10 h-12"
+            />
+          </div>
 
-            {/* Category Filter and Sort */}
-            <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
-              <div className="flex flex-wrap gap-2 flex-1">
-                <Button
-                  variant={selectedCategory === null ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setSelectedCategory(null)}
-                >
-                  All Categories
-                </Button>
+          <div className="flex gap-4 flex-wrap">
+            <Select
+              value={selectedCategory?.toString() || "all"}
+              onValueChange={(value) => {
+                setSelectedCategory(value === "all" ? null : parseInt(value));
+                setPage(0);
+              }}
+            >
+              <SelectTrigger className="w-48">
+                <SelectValue placeholder="Select category" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Categories</SelectItem>
                 {categories?.map((cat) => (
-                  <Button
-                    key={cat.id}
-                    variant={selectedCategory === cat.id ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setSelectedCategory(cat.id)}
-                  >
+                  <SelectItem key={cat.id} value={cat.id.toString()}>
                     {cat.name}
-                  </Button>
+                  </SelectItem>
                 ))}
-              </div>
+              </SelectContent>
+            </Select>
 
-              {/* Sort Dropdown */}
-              <Select value={sortBy} onValueChange={(value: any) => setSortBy(value)}>
-                <SelectTrigger className="w-full md:w-40">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="newest">Newest First</SelectItem>
-                  <SelectItem value="oldest">Oldest First</SelectItem>
-                  <SelectItem value="popular">Most Popular</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+            <Select value={sortBy} onValueChange={(value: any) => setSortBy(value)}>
+              <SelectTrigger className="w-48">
+                <SelectValue placeholder="Sort by" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="newest">Newest First</SelectItem>
+                <SelectItem value="oldest">Oldest First</SelectItem>
+                <SelectItem value="popular">Most Popular</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
-      </section>
 
-      {/* Posts Grid */}
-      <section className="container py-12">
-        {isLoading_ ? (
+        {/* Posts Grid */}
+        {isLoading || searchLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[1, 2, 3, 4, 5, 6].map((i) => (
-              <div key={i} className="bg-card border border-border rounded-lg p-6">
-                <Skeleton className="h-6 mb-4 w-3/4" />
-                <Skeleton className="h-4 mb-2" />
-                <Skeleton className="h-4 w-1/2" />
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="space-y-3">
+                <Skeleton className="h-48 w-full rounded-lg" />
+                <Skeleton className="h-6 w-3/4" />
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-2/3" />
               </div>
             ))}
           </div>
         ) : displayPosts.length > 0 ? (
-          <>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-              {displayPosts.map((post) => (
-                <article
-                  key={post.id}
-                  className="bg-card border border-border rounded-lg overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
-                  onClick={() => navigate(`/blog/${post.slug}`)}
-                >
-                  <div className="p-6">
-                    <h3 className="text-lg font-bold mb-2 line-clamp-2 hover:text-accent transition-colors">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {displayPosts.map((post) => (
+              <div
+                key={post.id}
+                className="group cursor-pointer"
+                onClick={() => navigate(`/blog/${post.slug}`)}
+              >
+                <div className="bg-card border border-border rounded-lg overflow-hidden hover:border-accent/50 transition-all hover:shadow-lg">
+                  {post.featuredImageUrl && (
+                    <div className="h-48 bg-muted overflow-hidden">
+                      <img
+                        src={post.featuredImageUrl}
+                        alt={post.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                      />
+                    </div>
+                  )}
+
+                  <div className="p-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="text-xs px-2 py-1 bg-accent/10 text-accent rounded">
+                        {categories?.find((c) => c.id === post.categoryId)?.name || "Uncategorized"}
+                      </span>
+                      <span className="text-xs text-foreground/50">
+                        {formatDistanceToNow(new Date(post.createdAt), {
+                          addSuffix: true,
+                        })}
+                      </span>
+                    </div>
+
+                    <h3 className="font-bold text-lg mb-2 line-clamp-2 group-hover:text-accent transition-colors">
                       {post.title}
                     </h3>
-                    {post.excerpt && (
-                      <p className="text-foreground/70 text-sm mb-4 line-clamp-2">
-                        {post.excerpt}
-                      </p>
-                    )}
-                    <div className="flex items-center justify-between text-xs text-foreground/60">
-                      <div className="flex items-center gap-4">
-                        <div className="flex items-center gap-1">
-                          <Calendar className="w-4 h-4" />
-                          {formatDistanceToNow(new Date(post.createdAt), {
-                            addSuffix: true,
-                          })}
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <Eye className="w-4 h-4" />
-                          {post.viewCount || 0}
-                        </div>
+
+                    <p className="text-sm text-foreground/70 line-clamp-2 mb-4">
+                      {post.excerpt}
+                    </p>
+
+                    <div className="flex items-center justify-between text-xs text-foreground/50">
+                      <div className="flex items-center gap-1">
+                        <Eye className="w-3 h-3" />
+                        <span>{post.viewCount || 0} views</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Calendar className="w-3 h-3" />
+                        <span>{Math.ceil((post.content?.length || 0) / 200)} min read</span>
                       </div>
                     </div>
                   </div>
-                </article>
-              ))}
-            </div>
-
-            {/* Pagination */}
-            <div className="flex items-center justify-center gap-4">
-              <Button
-                variant="outline"
-                onClick={() => setPage(Math.max(0, page - 1))}
-                disabled={page === 0}
-              >
-                Previous
-              </Button>
-              <span className="text-foreground/70">Page {page + 1}</span>
-              <Button
-                variant="outline"
-                onClick={() => setPage(page + 1)}
-                disabled={!latestPosts || latestPosts.length < 12}
-              >
-                Next
-              </Button>
-            </div>
-          </>
+                </div>
+              </div>
+            ))}
+          </div>
         ) : (
           <div className="text-center py-12">
-            <p className="text-foreground/70 text-lg">
-              No articles found. Try adjusting your search or filters.
-            </p>
+            <p className="text-foreground/70 mb-4">No posts found</p>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setSearchQuery("");
+                setSelectedCategory(null);
+              }}
+            >
+              Clear Filters
+            </Button>
           </div>
         )}
-      </section>
 
-      {/* Footer */}
-      <footer className="bg-card border-t border-border py-12">
-        <div className="container text-center text-sm text-foreground/60">
-          <p>&copy; 2026 My Blog. All rights reserved.</p>
-        </div>
-      </footer>
+        {/* Pagination */}
+        {displayPosts.length > 0 && !searchQuery && (
+          <div className="flex justify-center gap-2 mt-12">
+            <Button
+              variant="outline"
+              onClick={() => setPage(Math.max(0, page - 1))}
+              disabled={page === 0}
+            >
+              Previous
+            </Button>
+            <div className="flex items-center px-4">
+              Page {page + 1}
+            </div>
+            <Button
+              variant="outline"
+              onClick={() => setPage(page + 1)}
+              disabled={!latestPosts || latestPosts.length < 12}
+            >
+              Next
+            </Button>
+          </div>
+        )}
+      </main>
     </div>
   );
 }
