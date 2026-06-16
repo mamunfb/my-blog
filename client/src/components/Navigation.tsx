@@ -1,9 +1,10 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
-import { Menu, X } from "lucide-react";
+import { Menu, X, Moon, Sun } from "lucide-react";
 import { getLoginUrl } from "@/const";
 import { useState } from "react";
 import { useLocation } from "wouter";
+import { useTheme } from "@/contexts/ThemeContext";
 
 interface NavigationProps {
   categories?: Array<{ id: number; name: string; slug: string }>;
@@ -11,6 +12,7 @@ interface NavigationProps {
 
 export default function Navigation({ categories = [] }: NavigationProps) {
   const { user, logout, isAuthenticated } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const [isOpen, setIsOpen] = useState(false);
   const [location] = useLocation();
 
@@ -56,8 +58,19 @@ export default function Navigation({ categories = [] }: NavigationProps) {
             ))}
           </div>
 
-          {/* Auth Buttons */}
+          {/* Theme Toggle & Auth Buttons */}
           <div className="hidden md:flex items-center gap-4">
+            <button
+              onClick={toggleTheme}
+              className="p-2 rounded-lg hover:bg-muted transition-colors"
+              aria-label="Toggle dark mode"
+            >
+              {theme === "dark" ? (
+                <Sun className="w-5 h-5 text-accent" />
+              ) : (
+                <Moon className="w-5 h-5 text-foreground/70" />
+              )}
+            </button>
             {isAuthenticated ? (
               <>
                 <div className="text-sm text-foreground/70">
@@ -121,6 +134,22 @@ export default function Navigation({ categories = [] }: NavigationProps) {
             ))}
 
             <div className="px-4 py-2 border-t border-border mt-2 pt-4 flex flex-col gap-2">
+              <button
+                onClick={toggleTheme}
+                className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-muted rounded-lg transition-colors"
+              >
+                {theme === "dark" ? (
+                  <>
+                    <Sun className="w-4 h-4" />
+                    Light Mode
+                  </>
+                ) : (
+                  <>
+                    <Moon className="w-4 h-4" />
+                    Dark Mode
+                  </>
+                )}
+              </button>
               {isAuthenticated ? (
                 <>
                   <div className="text-sm text-foreground/70 px-0">

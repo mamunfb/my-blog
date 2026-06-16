@@ -28,6 +28,9 @@
 - [x] Add comment moderation in admin panel
 - [ ] Implement nested replies (optional enhancement)
 
+## Additional Enhancements
+- [x] Add dark mode toggle to navigation for comfortable reading
+
 ## Phase 5: Search & Filters
 - [x] Implement search functionality on blog listing page
 - [x] Add category filter buttons
