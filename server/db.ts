@@ -1,6 +1,6 @@
-import { eq } from "drizzle-orm";
+import { eq, desc } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users } from "../drizzle/schema";
+import { InsertUser, users, posts, categories, tags, comments, postTags } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -89,4 +89,147 @@ export async function getUserByOpenId(openId: string) {
   return result.length > 0 ? result[0] : undefined;
 }
 
-// TODO: add feature queries here as your schema grows.
+export async function getFeaturedPosts(limit = 3) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const result = await db
+    .select()
+    .from(posts)
+    .where(eq(posts.published, 'published'))
+    .orderBy(desc(posts.viewCount))
+    .limit(limit);
+  
+  return result;
+}
+
+export async function getLatestPosts(limit = 10, offset = 0) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const result = await db
+    .select()
+    .from(posts)
+    .where(eq(posts.published, 'published'))
+    .orderBy(desc(posts.publishedAt))
+    .limit(limit)
+    .offset(offset);
+  
+  return result;
+}
+
+export async function getPostBySlug(slug: string) {
+  const db = await getDb();
+  if (!db) return undefined;
+  
+  const result = await db
+    .select()
+    .from(posts)
+    .where(eq(posts.slug, slug))
+    .limit(1);
+  
+  return result.length > 0 ? result[0] : undefined;
+}
+
+export async function getPostsByCategory(categoryId: number, limit = 10) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const result = await db
+    .select()
+    .from(posts)
+    .where(eq(posts.categoryId, categoryId) && eq(posts.published, 'published'))
+    .orderBy(desc(posts.publishedAt))
+    .limit(limit);
+  
+  return result;
+}
+
+export async function getPostsByTag(tagId: number, limit = 10) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const result = await db
+    .select()
+    .from(posts)
+    .innerJoin(postTags, eq(posts.id, postTags.postId))
+    .where(eq(postTags.tagId, tagId) && eq(posts.published, 'published'))
+    .orderBy(desc(posts.publishedAt))
+    .limit(limit);
+  
+  return result.map(r => r.posts);
+}
+
+export async function searchPosts(query: string, limit = 10) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const searchTerm = `%${query}%`;
+  const result = await db
+    .select()
+    .from(posts)
+    .where(eq(posts.published, 'published'))
+    .orderBy(desc(posts.publishedAt))
+    .limit(limit);
+  
+  return result.filter(p => 
+    p.title.toLowerCase().includes(query.toLowerCase()) ||
+    p.excerpt?.toLowerCase().includes(query.toLowerCase())
+  );
+}
+
+export async function getAllCategories() {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const result = await db.select().from(categories).orderBy(categories.name);
+  return result;
+}
+
+export async function getAllTags() {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const result = await db.select().from(tags).orderBy(tags.name);
+  return result;
+}
+
+export async function getPostComments(postId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const result = await db
+    .select()
+    .from(comments)
+    .where(eq(comments.postId, postId) && eq(comments.approved, 'approved'))
+    .orderBy(desc(comments.createdAt));
+  
+  return result;
+}
+
+export async function getPostsByAuthor(authorId: number, limit = 10) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const result = await db
+    .select()
+    .from(posts)
+    .where(eq(posts.authorId, authorId) && eq(posts.published, 'published'))
+    .orderBy(desc(posts.publishedAt))
+    .limit(limit);
+  
+  return result;
+}
+
+export async function getAuthorPosts(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const result = await db
+    .select()
+    .from(posts)
+    .where(eq(posts.authorId, userId))
+    .orderBy(desc(posts.publishedAt));
+  
+  return result;
+}
