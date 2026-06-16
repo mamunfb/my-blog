@@ -9,6 +9,7 @@ import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 import { generateSitemap, generateRobotsTxt } from "../sitemapGenerator";
+import { handleNewsletterEmail } from "../newsletterEmailHandler";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -65,6 +66,9 @@ async function startServer() {
       res.status(500).send("Error generating robots.txt");
     }
   });
+
+  // Newsletter email notification handler (Heartbeat cron)
+  app.post("/api/scheduled/newsletter-email", handleNewsletterEmail);
   // tRPC API
   app.use(
     "/api/trpc",

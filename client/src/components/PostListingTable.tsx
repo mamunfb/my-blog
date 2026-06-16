@@ -39,18 +39,22 @@ interface Post {
 }
 
 interface PostListingTableProps {
+  posts?: Post[];
   onEdit?: (post: Post) => void;
+  onDelete?: (postId: number) => void;
 }
 
-export default function PostListingTable({ onEdit }: PostListingTableProps) {
+export default function PostListingTable({ posts: externalPosts, onEdit, onDelete }: PostListingTableProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [deletePostId, setDeletePostId] = useState<number | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  // Fetch all posts
-  const { data: posts, isLoading, refetch } = trpc.blog.getAllPosts.useQuery(undefined, {
-    enabled: true,
+  // Fetch all posts if not provided
+  const { data: fetchedPosts, isLoading, refetch } = trpc.blog.getAllPosts.useQuery(undefined, {
+    enabled: !externalPosts,
   });
+
+  const posts = externalPosts || fetchedPosts;
 
   // Delete mutation
   const deletePostMutation = trpc.blog.deletePost.useMutation({
