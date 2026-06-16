@@ -21,6 +21,7 @@ import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { useLanguageTracking } from "@/hooks/useLanguageTracking";
 import { useTranslation } from "@/contexts/TranslationContext";
+import Breadcrumb from "@/components/Breadcrumb";
 import {
   setMetaTags,
   setHrefLangLinks,
@@ -137,6 +138,17 @@ export default function BlogPost() {
               />
             </div>
           )}
+
+          {/* Breadcrumb Navigation */}
+          <div className="container-narrow py-4">
+            <Breadcrumb
+              items={[
+                { label: "Home", href: "/" },
+                { label: "Blog", href: "/blog" },
+                { label: post.title, current: true },
+              ]}
+            />
+          </div>
 
           {/* Main Content */}
           <article className="container-narrow py-12 md:py-16">

@@ -7,6 +7,7 @@ import LanguageSwitchTransition from "@/components/LanguageSwitchTransition";
 import { ArrowRight, Calendar, User } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { useTranslation } from "@/contexts/TranslationContext";
+import Breadcrumb from "@/components/Breadcrumb";
 import {
   setMetaTags,
   setHrefLangLinks,
@@ -59,6 +60,15 @@ export default function Home() {
     <LanguageSwitchTransition>
       <div className="min-h-screen bg-background">
         <Navigation categories={categories} />
+
+        {/* Breadcrumb Navigation */}
+        <div className="container">
+          <Breadcrumb
+            items={[
+              { label: "Home", href: "/", current: true },
+            ]}
+          />
+        </div>
 
         {/* Hero Section */}
         <section className="bg-gradient-to-br from-card to-muted/50 border-b border-border">
