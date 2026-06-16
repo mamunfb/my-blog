@@ -1,6 +1,4 @@
-import { drizzle } from "drizzle-orm/mysql2";
 import mysql from "mysql2/promise";
-import { posts, categories, tags, postTags } from "../drizzle/schema.ts";
 
 const DATABASE_URL = process.env.DATABASE_URL;
 
@@ -13,12 +11,6 @@ if (!DATABASE_URL) {
 const samplePosts = [
   {
     title: "Getting Started with Web Development",
-    titleEn: "Getting Started with Web Development",
-    titleEs: "Comenzando con el Desarrollo Web",
-    titleFr: "Commencer le Développement Web",
-    titleDe: "Erste Schritte in der Webentwicklung",
-    titleJa: "ウェブ開発を始める",
-    titleZh: "网络开发入门",
     slug: "getting-started-web-development",
     content: `
       <h2>Introduction</h2>
@@ -40,18 +32,10 @@ const samplePosts = [
       <p>There are many free resources available online including tutorials, documentation, and communities ready to help you learn.</p>
     `,
     excerpt: "Learn the fundamentals of web development and start your coding journey today.",
-    category: "Technology",
-    tags: ["web-development", "beginner", "tutorial"],
     featured: true,
   },
   {
     title: "The Future of Artificial Intelligence",
-    titleEn: "The Future of Artificial Intelligence",
-    titleEs: "El Futuro de la Inteligencia Artificial",
-    titleFr: "L'Avenir de l'Intelligence Artificielle",
-    titleDe: "Die Zukunft der Künstlichen Intelligenz",
-    titleJa: "人工知能の未来",
-    titleZh: "人工智能的未来",
     slug: "future-artificial-intelligence",
     content: `
       <h2>AI Revolution</h2>
@@ -73,18 +57,10 @@ const samplePosts = [
       <p>While AI offers tremendous potential, we must address ethical concerns, bias, and ensure responsible development.</p>
     `,
     excerpt: "Explore the transformative impact of AI and what the future holds.",
-    category: "Technology",
-    tags: ["artificial-intelligence", "future", "innovation"],
     featured: true,
   },
   {
     title: "Sustainable Living in the Modern World",
-    titleEn: "Sustainable Living in the Modern World",
-    titleEs: "Vida Sostenible en el Mundo Moderno",
-    titleFr: "Vie Durable dans le Monde Moderne",
-    titleDe: "Nachhaltiges Leben in der modernen Welt",
-    titleJa: "現代世界での持続可能な生活",
-    titleZh: "现代世界中的可持续生活",
     slug: "sustainable-living-modern-world",
     content: `
       <h2>Why Sustainability Matters</h2>
@@ -106,18 +82,10 @@ const samplePosts = [
       <p>Sustainability is not just an environmental issue—it's about creating a better quality of life for everyone.</p>
     `,
     excerpt: "Discover practical ways to live sustainably and make a positive impact on our planet.",
-    category: "Lifestyle",
-    tags: ["sustainability", "environment", "lifestyle"],
     featured: false,
   },
   {
     title: "Digital Marketing Strategies for 2024",
-    titleEn: "Digital Marketing Strategies for 2024",
-    titleEs: "Estrategias de Marketing Digital para 2024",
-    titleFr: "Stratégies de Marketing Numérique pour 2024",
-    titleDe: "Digitale Marketingstrategien für 2024",
-    titleJa: "2024年のデジタルマーケティング戦略",
-    titleZh: "2024年数字营销策略",
     slug: "digital-marketing-strategies-2024",
     content: `
       <h2>The Digital Marketing Landscape</h2>
@@ -139,47 +107,57 @@ const samplePosts = [
       <p>The future of marketing is about building genuine connections with your audience through authentic, valuable content.</p>
     `,
     excerpt: "Master the latest digital marketing strategies to grow your business in 2024.",
-    category: "Business",
-    tags: ["marketing", "digital", "strategy"],
     featured: true,
   },
 ];
 
 async function seedDatabase() {
+  let connection;
   try {
     // Create connection
-    const connection = await mysql.createConnection(DATABASE_URL);
-    const db = drizzle(connection);
+    connection = await mysql.createConnection(DATABASE_URL);
 
     console.log("🌱 Starting to seed blog posts...");
 
-    // First, ensure categories exist
-    const categoryNames = ["Technology", "Lifestyle", "Business"];
+    // Get the owner ID (first admin user)
+    const [users] = await connection.query(
+      "SELECT id FROM users WHERE role = 'admin' LIMIT 1"
+    );
     
+    if (!users || users.length === 0) {
+      console.error("❌ No admin user found. Please create an admin user first.");
+      process.exit(1);
+    }
+
+    const authorId = users[0].id;
+    console.log(`📝 Using author ID: ${authorId}`);
+
     for (const post of samplePosts) {
       console.log(`📝 Creating post: ${post.title}`);
 
       // Insert post
-      const result = await db.insert(posts).values({
-        title: post.title,
-        slug: post.slug,
-        content: post.content,
-        excerpt: post.excerpt,
-        featured: post.featured,
-        published: "published",
-        publishedAt: new Date(),
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      });
+      const [result] = await connection.query(
+        "INSERT INTO posts (title, slug, content, excerpt, authorId, published, publishedAt, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), NOW())",
+        [
+          post.title,
+          post.slug,
+          post.content,
+          post.excerpt,
+          authorId,
+          "published",
+          new Date(),
+        ]
+      );
 
-      console.log(`✅ Post created: ${post.title}`);
+      console.log(`✅ Post created: ${post.title} (ID: ${result.insertId})`);
     }
 
     console.log("✨ Database seeding completed successfully!");
     await connection.end();
     process.exit(0);
   } catch (error) {
-    console.error("❌ Error seeding database:", error);
+    console.error("❌ Error seeding database:", error.message);
+    if (connection) await connection.end();
     process.exit(1);
   }
 }
