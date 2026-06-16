@@ -2,6 +2,7 @@ import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import Navigation from "@/components/Navigation";
+import LanguageSwitchTransition from "@/components/LanguageSwitchTransition";
 import { ArrowRight, Calendar, User } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 
@@ -13,8 +14,9 @@ export default function Home() {
     trpc.blog.getLatestPosts.useQuery({ limit: 6 });
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navigation categories={categories} />
+    <LanguageSwitchTransition>
+      <div className="min-h-screen bg-background">
+        <Navigation categories={categories} />
 
       {/* Hero Section */}
       <section className="bg-gradient-to-br from-card to-muted/50 border-b border-border">
@@ -236,6 +238,7 @@ export default function Home() {
           </div>
         </div>
       </footer>
-    </div>
+      </div>
+    </LanguageSwitchTransition>
   );
 }

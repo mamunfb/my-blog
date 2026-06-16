@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { getLoginUrl } from "@/const";
 import ReadingTime from "@/components/ReadingTime";
-import SocialShare from "@/components/SocialShare";
+import EnhancedSocialShare from "@/components/EnhancedSocialShare";
 import PostRating from "@/components/PostRating";
 import TableOfContents from "@/components/TableOfContents";
 import PopularPosts from "@/components/PopularPosts";
@@ -19,10 +19,12 @@ import {
 import { formatDistanceToNow } from "date-fns";
 import { useState } from "react";
 import { toast } from "sonner";
+import { useLanguageTracking } from "@/hooks/useLanguageTracking";
 
 export default function BlogPost() {
   const [, params] = useRoute("/blog/:slug");
   const [commentText, setCommentText] = useState("");
+  useLanguageTracking(undefined); // Will be updated when post loads
 
   const { user, isAuthenticated } = useAuth();
   const { data: categories } = trpc.blog.getAllCategories.useQuery();
@@ -129,7 +131,7 @@ export default function BlogPost() {
 
                 {/* Social Share */}
                 <div className="py-8 border-t border-b border-border mb-12">
-                  <SocialShare title={shareTitle} url={shareUrl} />
+                  <EnhancedSocialShare title={shareTitle} url={shareUrl} excerpt={post.excerpt || ''} />
                 </div>
 
                 {/* Post Rating */}
