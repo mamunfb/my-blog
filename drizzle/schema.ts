@@ -99,3 +99,43 @@ export const languageAnalytics = mysqlTable("languageAnalytics", {
 
 export type LanguageAnalytics = typeof languageAnalytics.$inferSelect;
 export type InsertLanguageAnalytics = typeof languageAnalytics.$inferInsert;
+
+export const commentRatings = mysqlTable("commentRatings", {
+  id: int("id").autoincrement().primaryKey(),
+  commentId: int("commentId").notNull().references(() => comments.id, { onDelete: "cascade" }),
+  rating: int("rating").notNull(), // 1-5 stars
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type CommentRating = typeof commentRatings.$inferSelect;
+export type InsertCommentRating = typeof commentRatings.$inferInsert;
+
+export const socialSharingMetrics = mysqlTable("socialSharingMetrics", {
+  id: int("id").autoincrement().primaryKey(),
+  postId: int("postId").notNull().references(() => posts.id, { onDelete: "cascade" }),
+  platform: varchar("platform", { length: 50 }).notNull(), // facebook, twitter, whatsapp, email, etc
+  shareCount: int("shareCount").default(0).notNull(),
+  clickCount: int("clickCount").default(0).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type SocialSharingMetrics = typeof socialSharingMetrics.$inferSelect;
+export type InsertSocialSharingMetrics = typeof socialSharingMetrics.$inferInsert;
+
+export const postDrafts = mysqlTable("postDrafts", {
+  id: int("id").autoincrement().primaryKey(),
+  postId: int("postId").references(() => posts.id, { onDelete: "cascade" }),
+  userId: int("userId").notNull().references(() => users.id, { onDelete: "cascade" }),
+  title: varchar("title", { length: 255 }).notNull(),
+  slug: varchar("slug", { length: 255 }).notNull(),
+  content: text("content").notNull(),
+  excerpt: varchar("excerpt", { length: 500 }),
+  featuredImageUrl: varchar("featuredImageUrl", { length: 500 }),
+  data: text("data"), // Store additional metadata as JSON string
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type PostDraft = typeof postDrafts.$inferSelect;
+export type InsertPostDraft = typeof postDrafts.$inferInsert;

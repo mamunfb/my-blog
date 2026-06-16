@@ -300,3 +300,35 @@
 - [x] 10. Add smooth scrolling to form when editing
 - [x] 11. Integrate PostListingTable into admin panel
 - [x] 12. Add featured image upload to form
+
+
+## Phase 29: Comment System with Ratings
+- [x] 1. Create comments table with approval status
+- [x] 2. Create comment ratings table
+- [x] 3. Create CommentSection component with rating UI
+- [x] 4. Add star rating system (1-5 stars)
+- [x] 5. Display average rating and comment count
+- [x] 6. Add comment submission form
+- [x] 7. Add comment approval workflow
+- [x] 8. Display approved comments only
+
+## Phase 30: Social Sharing Metrics Tracking
+- [x] 1. Create socialSharingMetrics database table
+- [x] 2. Create SocialSharingTracker utility class
+- [x] 3. Track shares for multiple platforms (Facebook, Twitter, WhatsApp, Email, LinkedIn, Reddit, Telegram)
+- [x] 4. Track clicks on shared links
+- [x] 5. Store metrics in localStorage
+- [x] 6. Send metrics to server
+- [x] 7. Generate platform-specific share URLs
+- [x] 8. Calculate most shared platform
+
+## Phase 31: Auto-Save Draft Functionality
+- [x] 1. Create postDrafts database table
+- [x] 2. Create useAutoSaveDraft hook
+- [x] 3. Auto-save to localStorage every 30 seconds
+- [x] 4. Auto-save to server periodically
+- [x] 5. Load draft on page load
+- [x] 6. Delete draft after publishing
+- [x] 7. Show draft info (saved time, size)
+- [x] 8. Manual save functionality
+- [x] 9. Prevent data loss on page refresh
