@@ -29,12 +29,12 @@ export default function Navigation({ categories = [] }: NavigationProps) {
   };
 
   return (
-    <nav className="sticky top-0 z-50 bg-card border-b border-border">
+    <nav className="sticky top-0 z-50 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 dark:from-blue-900 dark:via-purple-900 dark:to-pink-900 border-b-4 border-gradient-to-r from-blue-400 to-pink-400 shadow-lg">
       <div className="container">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <a href="/" className="flex items-center gap-2 font-bold text-xl">
-            <div className="w-8 h-8 bg-accent rounded-lg flex items-center justify-center text-accent-foreground">
+          <a href="/" className="flex items-center gap-2 font-bold text-xl text-white hover:text-yellow-200 transition-colors">
+            <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center text-white">
               ✦
             </div>
             <span className="hidden sm:inline">My Blog</span>
@@ -60,10 +60,10 @@ export default function Navigation({ categories = [] }: NavigationProps) {
           <div className="hidden md:flex items-center gap-8">
             <a
               href="/blog"
-              className={`text-sm transition-colors ${
+              className={`text-sm font-semibold transition-colors ${
                 isActive("/blog")
-                  ? "text-accent font-semibold"
-                  : "text-foreground/70 hover:text-foreground"
+                  ? "text-yellow-200"
+                  : "text-white hover:text-yellow-100"
               }`}
             >
               All Posts

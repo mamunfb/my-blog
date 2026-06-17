@@ -119,7 +119,7 @@ export default function BlogPost() {
   const shareTitle = post?.title || "Check out this article";
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-blue-50/30 to-purple-50/30 dark:from-background dark:via-blue-950/20 dark:to-purple-950/20">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 dark:from-blue-950/40 dark:via-purple-950/40 dark:to-pink-950/40">
       <Navigation categories={categories} />
 
       {postLoading ? (

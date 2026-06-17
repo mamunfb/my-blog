@@ -5,7 +5,7 @@ export function Footer() {
   const { t } = useTranslation();
 
   return (
-    <footer className="bg-slate-900 text-white py-12 mt-16">
+    <footer className="bg-gradient-to-r from-slate-900 via-purple-900 to-slate-900 text-white py-12 mt-16 border-t-4 border-gradient-to-r from-blue-500 via-purple-500 to-pink-500">
       <div className="container mx-auto px-4">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
           {/* About Section */}
