@@ -123,3 +123,17 @@ Never add real keys, passwords, connection URIs, or tokens to this repository or
 - [QUICK_START_VERCEL.md](./QUICK_START_VERCEL.md)
 - [DEPLOYMENT_CHECKLIST.md](./DEPLOYMENT_CHECKLIST.md)
 - [SEED_DATA_GUIDE.md](./SEED_DATA_GUIDE.md)
+
+
+## Container deployment path (prepared, not deployed)
+
+The repository now includes a multi-stage `Dockerfile` for a single Express web service. It uses Node 22, installs from the locked pnpm workspace, builds the Vite client and Express bundle, installs production dependencies, and starts `node dist/index.js`; the server respects the platform-provided `PORT`. A Docker-capable host can serve the client and `/api/trpc` from the same origin, avoiding a separate frontend/API rewrite. Vercel's static frontend-only deployment still does not run this Express process.
+
+Local image commands (requires Docker):
+
+```bash
+docker build -t my-blog .
+docker run --rm -p 3000:3000 --env-file .env.production my-blog
+```
+
+`.env.production` is a local placeholder filename only: create it privately, never commit it or bake credentials into the image. Set `DATABASE_URL`, OAuth/application values, `JWT_SECRET`, owner values, and any enabled integration credentials in the host's secret settings. Do not run schema migrations automatically at container startup; review and apply migrations as a separate release step. The Docker image itself has not been built in this environment because Docker is unavailable; the repository's `pnpm build` and tests passed. No provider account, service, domain, or production deployment has been configured.
