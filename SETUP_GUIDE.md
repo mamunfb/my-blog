@@ -1,11 +1,11 @@
 # Blog Website Setup Guide
 
-এই গাইডটি অ্যাপের সেটআপ ও চালুর পরিকল্পনা বোঝায়। **Supabase project `my-blog` (Singapore, ref `mbwtfbpoefqjfbnxozbx`) তৈরি হয়েছে এবং baseline schema apply হয়েছে। RLS সব 11 table-এ বন্ধ; anon key expose করার আগে policy decision জরুরি। Runtime values, API hosting path এবং production validation এখনও configure/verify করতে হবে। App live—এমন দাবি নয়।**
+এই গাইডটি অ্যাপের সেটআপ ও চালুর পরিকল্পনা বোঝায়। **Supabase project `my-blog` (Singapore, ref `mbwtfbpoefqjfbnxozbx`) তৈরি এবং baseline schema apply হয়েছে। সব 11 table-এ RLS enabled; কোনো policy নেই। Runtime values, server DB role, API hosting path ও production validation এখনও configure/verify করতে হবে। App live—এমন দাবি নয়।**
 
 ## Database ও deployment অবস্থা
 
 - অ্যাপের API হলো Express + tRPC। Supabase PostgreSQL এবং পরিকল্পিত object storage-এর জন্য; Supabase Express API server-এর বিকল্প নয়।
-- `drizzle.config.ts` PostgreSQL dialect ব্যবহার করে এবং migration output `drizzle-postgres/`। `0000_great_mulholland_black.sql` নতুন project-এ apply হয়েছে; Supabase 11টি table ও 0 row দেখিয়েছে। App runtime connection/CRUD এখনও পরীক্ষা হয়নি।
+- `drizzle.config.ts` PostgreSQL dialect ব্যবহার করে এবং migration output `drizzle-postgres/`। Baseline `0000_great_mulholland_black.sql` ও RLS migration `0001_enable_rls_on_app_tables.sql` Supabase project-এ apply হয়েছে; 11টি table যাচাই করা হয়েছে। RLS enabled, policy নেই। Drizzle ledger-ও এই দুই migration-এর জন্য sync করা হয়েছে; app runtime connection/CRUD এখনও পরীক্ষা হয়নি।
 - `drizzle-legacy-mysql/`-এ পুরোনো MySQL migration chain ও snapshots archive হিসেবে আছে; এগুলো Supabase PostgreSQL-এ চালাবেন না। `drizzle/`-এ বর্তমান schema/relations রাখা আছে।
 - `pnpm db:generate`, `pnpm db:migrate` এবং `pnpm db:push` package scripts-এ আছে। `db:migrate`-এর জন্য `DATABASE_URL` আবশ্যক। Production database-এ command চালানোর আগে generated SQL review, target URI যাচাই এবং backup নিশ্চিত করুন।
 - Source-এ Vercel Functions বা Express adapter নেই। Vercel-এ শুধু frontend build করলে `/api/trpc` এবং অন্য server route চলবে না। Express server-এর জন্য compatible Node.js runtime host এবং frontend-to-API routing আগে ঠিক করুন।
@@ -34,12 +34,12 @@ postgresql://<user>:<password>@<host>:5432/<database>
 Database setup:
 
 1. বর্তমান project-এ baseline migration apply হয়েছে; অন্য dev/staging target ব্যবহার করলে সেটি আলাদাভাবে ঠিক করুন।
-2. `drizzle-postgres/`-এর active PostgreSQL migration review করুন। `drizzle-legacy-mysql/` থেকে কিছু apply করবেন না।
+2. `drizzle-postgres/`-এর baseline ও RLS migration review করুন। `drizzle-legacy-mysql/` থেকে কিছু apply করবেন না।
 3. `pnpm db:generate` কেবল schema change থেকে migration generate করতে ব্যবহার করুন; generated SQL review করুন।
 4. `DATABASE_URL` সঠিক target-এ সেট করে `pnpm db:migrate` চালান। `pnpm db:push` generate ও migrate একসঙ্গে চালায়; production-এ না চালিয়ে reviewed migration rollout ব্যবহার করুন।
 5. Tables/constraints যাচাই হয়েছে; runtime `DATABASE_URL` configure করার পর API read/write ও backup/restore পরীক্ষা করুন।
 
-RLS বর্তমানে বন্ধ; Supabase anon key expose করার আগে access policy/RLS নির্ধারণ ও test করুন। Storage ব্যবহার করলে bucket, access policy এবং app integration-এর variable/configuration contract আলাদাভাবে নিশ্চিত করুন।
+RLS সব 11 table-এ enabled, কিন্তু policy নেই; client-facing table access লাগলে least-privilege policy design/test করুন। Express server-এর database role/connection-ও configure ও verify করতে হবে। Storage ব্যবহার করলে bucket, access policy এবং app integration-এর variable/configuration contract আলাদাভাবে নিশ্চিত করুন।
 
 ## ৩. Runtime environment ও secret
 

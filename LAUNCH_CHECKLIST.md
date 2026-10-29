@@ -6,7 +6,8 @@
 
 - [x] Supabase PostgreSQL project `my-blog` তৈরি, Singapore অঞ্চল; baseline schema apply ও 11 table verify করা হয়েছে.
 - [ ] Connection mode, TLS/network access ও runtime secret storage configure করুন.
-- [ ] Anon key expose করার আগে RLS/access policy নির্ধারণ ও পরীক্ষা করুন (বর্তমানে 11 table-এ RLS বন্ধ).
+- [x] RLS সব 11 table-এ enabled; policy নেই.
+- [ ] Client-facing access লাগলে least-privilege policy design/test করুন; Express server database role/privileges যাচাই করুন.
 - [x] Initial PostgreSQL baseline under `drizzle-postgres/` নতুন project-এ apply হয়েছে.
 - [ ] Runtime credentials দিয়ে app connection ও migration upgrade test করুন.
 - [ ] Migration upgrade path tested; production backup and rollback process prepared.

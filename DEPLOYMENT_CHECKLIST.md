@@ -20,7 +20,7 @@
 
 - App API হলো Express + tRPC; source-এ Vercel Functions/Express adapter নেই।
 - Supabase-এর ভূমিকা PostgreSQL এবং পরিকল্পিত Storage; এটি API server নয়।
-- `drizzle.config.ts` PostgreSQL dialect ব্যবহার করে এবং output path `drizzle-postgres/`; বর্তমানে সেখানে `0000_great_mulholland_black.sql` ও metadata রয়েছে।
+- `drizzle.config.ts` PostgreSQL dialect ব্যবহার করে এবং output path `drizzle-postgres/`; baseline ও RLS migration আছে এবং Supabase-এ apply হয়েছে।
 - `drizzle-legacy-mysql/` পুরোনো MySQL chain/snapshots-এর archive; PostgreSQL-এ চালাবেন না। `drizzle/`-এ schema/relations আছে।
 - Package scripts: `pnpm db:generate`, `pnpm db:migrate`, `pnpm db:push`; `db:migrate`-এর জন্য `DATABASE_URL` দরকার। `db:push` generate+migrate চালায়।
 - `pnpm seed`/`npm run seed` package script নেই; PostgreSQL seed file `node server/seedSamplePosts.mjs` দিয়ে সরাসরি চালানো যায় এবং `DATABASE_URL` ও existing admin user চায়।
@@ -28,7 +28,8 @@
 ## Supabase ও database যাচাই
 
 - [ ] URI শুধু API runtime host-এর secret manager-এ; git/docs-এ নেই।
-- [ ] RLS enablement ও access policy নির্ধারণ/test করুন (বর্তমানে সব 11 table-এ বন্ধ)।
+- [x] RLS all 11 tables-এ enabled; Supabase-এ policy তালিকা empty যাচাই হয়েছে.
+- [ ] Client-facing access লাগলে least-privilege RLS policies design/test করুন; Express DB role/privilegesও পরীক্ষা করুন.
 - [x] Reviewed baseline apply; 11 table, 12 FK ও 3 enum যাচাই।
 - [ ] API read/write, indexes, backup/restore ও production migration upgrade path পরীক্ষা করুন।
 

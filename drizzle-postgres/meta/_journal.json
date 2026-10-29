@@ -8,6 +8,13 @@
       "when": 1793248986200,
       "tag": "0000_great_mulholland_black",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1793249606000,
+      "tag": "0001_enable_rls_on_app_tables",
+      "breakpoints": false
     }
   ]
 }

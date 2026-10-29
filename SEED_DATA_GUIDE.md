@@ -22,7 +22,7 @@ Do not write the actual Supabase URI into this guide. Its general format is `pos
 
 ## Migration paths: active PostgreSQL vs archived MySQL
 
-- **Active PostgreSQL migrations:** `drizzle-postgres/`, configured by `drizzle.config.ts`; current initial migration is `0000_great_mulholland_black.sql` with metadata under `drizzle-postgres/meta/`.
+- **Active PostgreSQL migrations:** `drizzle-postgres/`, configured by `drizzle.config.ts`; it contains the applied baseline `0000_great_mulholland_black.sql` and `0001_enable_rls_on_app_tables.sql` (RLS on, no policies), with metadata under `drizzle-postgres/meta/`.
 - **Archived MySQL migrations:** `drizzle-legacy-mysql/`, retained for historical reference. Never apply these files to Supabase PostgreSQL or copy them into Supabase SQL Editor.
 
 Review migration SQL and validate against a development database before running the seed script. See [VERCEL_SUPABASE_DEPLOYMENT.md](./VERCEL_SUPABASE_DEPLOYMENT.md) for deployment and migration notes.

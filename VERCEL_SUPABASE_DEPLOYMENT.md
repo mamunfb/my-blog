@@ -1,6 +1,6 @@
 # Vercel + Supabase deployment planning guide
 
-**This is a deployment plan, not a claim that the app is deployed or currently live.** The app API remains Express/tRPC. Supabase project `my-blog` (ref `mbwtfbpoefqjfbnxozbx`, Singapore) is healthy and the PostgreSQL baseline has been applied; 11 tables were verified with 0 rows. RLS is disabled on all 11 tables and needs an explicit security/policy decision before exposing an anon key. Runtime credentials, API hosting, routing, and full-stack validation remain pending.
+**This is a deployment plan, not a claim that the app is deployed or currently live.** The app API remains Express/tRPC. Supabase project `my-blog` (ref `mbwtfbpoefqjfbnxozbx`, Singapore) is healthy and the PostgreSQL baseline has been applied; 11 tables were verified with 0 rows. RLS is enabled on all 11 tables and `pg_policies` is empty (no policies). Runtime credentials, API hosting, routing, and full-stack validation remain pending.
 
 ## Architecture: responsibilities
 
@@ -24,7 +24,7 @@
 
 The current repository has a distinct active PostgreSQL set and an archived MySQL set:
 
-- **Active PostgreSQL path:** `drizzle.config.ts` uses the PostgreSQL dialect and writes migrations to `drizzle-postgres/`. The active baseline is `drizzle-postgres/0000_great_mulholland_black.sql`, with metadata under `drizzle-postgres/meta/`; it was applied to the new project and Supabase verified 11 empty tables. Test the application connection and later upgrade paths before production use.
+- **Active PostgreSQL path:** `drizzle.config.ts` uses PostgreSQL dialect and writes to `drizzle-postgres/`. The files `0000_great_mulholland_black.sql` (baseline) and `0001_enable_rls_on_app_tables.sql` (RLS enabled, no policies) are applied to the new project. The private Drizzle ledger has matching hashes/timestamps, preventing already-applied SQL from replaying. Test application connectivity and later upgrades before production use.
 - **Archived MySQL path:** `drizzle-legacy-mysql/` contains the former MySQL migration chain and snapshots, retained for historical reference. Do not run or copy these files into Supabase PostgreSQL.
 - `drizzle/` contains the current schema and relations; it is not the archived migration set.
 
@@ -36,7 +36,7 @@ pnpm db:migrate
 pnpm db:push
 ```
 
-`db:generate` generates migrations from the current schema. `db:migrate` requires `DATABASE_URL` and applies migrations using the configured PostgreSQL path. `db:push` chains generation and migration. Review generated changes and verify the target database before applying; prefer a reviewed migration rollout rather than unreviewed production schema changes.
+`db:generate` generates migrations from the current schema. `db:migrate` requires `DATABASE_URL` and applies migrations using the configured PostgreSQL path. `db:push` chains generation and migration. The Supabase project's private Drizzle ledger is seeded with hashes/timestamps for the applied baseline and RLS migration, preventing Drizzle from replaying them. Review generated changes and verify the target database before applying; prefer a reviewed migration rollout rather than unreviewed production schema changes. Runtime connection/CRUD remain untested.
 
 ## 3. Configure the Express API runtime
 
@@ -59,13 +59,13 @@ If the frontend and API use separate domains, configure and test same-origin pro
 
 ## 5. PostgreSQL schema status and next validation
 
-The baseline migration has already been applied to the newly created project `mbwtfbpoefqjfbnxozbx`; Supabase verified 11 public tables, 0 rows, and the expected enum/foreign-key structure. The application has not yet connected using a runtime `DATABASE_URL`, so API reads/writes remain untested. Keep `drizzle-legacy-mysql/` out of the PostgreSQL apply path.
+The baseline and RLS migrations have been applied to project `mbwtfbpoefqjfbnxozbx`; Supabase verified 11 public tables, 0 rows, expected enum/foreign-key structure, and RLS enabled on all 11 tables. The private Drizzle migration ledger has matching entries. The application has not yet connected using a runtime `DATABASE_URL`, so API reads/writes remain untested. Keep `drizzle-legacy-mysql/` out of the PostgreSQL apply path.
 
-**Security blocker:** RLS is disabled on all 11 tables. Do not expose a Supabase anon key until the owner chooses and tests access policies. Supabase supplied an RLS enablement script; see the SQL below and decide whether policy rules are needed for any client-facing access.
+**Security status:** RLS is enabled on all 11 tables and no policies exist; anon/authenticated roles therefore have no table access until policies are added. Do not rely on any client-facing data access yet. Configure and verify the Express runtime’s server-side DB role/connection before launch. The applied SQL is recorded below.
 
-### Supabase RLS enablement option (not applied)
+### Supabase RLS state and applied SQL
 
-Supabase reports Row Level Security is disabled on all 11 application tables. Until access policies are chosen, do not expose a Supabase anon key: anyone with that key can access tables through the Supabase Data API. The following is Supabase's suggested RLS enablement SQL; it enables RLS but adds **no policies**. It has not been applied. Decide whether client-facing policies are needed, and verify the Express runtime's database role before running it because role permissions affect server-side access.
+Supabase reports Row Level Security is now enabled on all 11 application tables. The user-approved SQL below was applied on 2026-10-29 as migration `enable_rls_on_app_tables`; Supabase reports `rls_enabled: true` for all tables. Querying `pg_policies` returned no rows, so no policies were added. This leaves anon/authenticated table access denied until policies are defined. Verify the Express runtime database role and privileges before relying on server-side access.
 
 ```sql
 ALTER TABLE "public"."categories" ENABLE ROW LEVEL SECURITY;
@@ -99,7 +99,7 @@ Before connecting a public domain, verify that the Express process starts on the
 
 ## Values still to configure or confirm
 
-- RLS enablement and policy design for all 11 application tables
+- Client-facing access-policy design (if needed) and Express server database-role/connection verification
 - PostgreSQL connection URI, direct/pooler choice, TLS/network settings, and server-side secret storage
 - Application CRUD smoke test through the selected Express runtime
 - API runtime host and process configuration

@@ -1,11 +1,11 @@
 # Vercel + Supabase: quick readiness guide
 
-**সম্পূর্ণ app live—এমন নিশ্চয়তা নেই।** Supabase project `my-blog` (Singapore, ref `mbwtfbpoefqjfbnxozbx`) ও 11-table baseline তৈরি হয়েছে; সব table-এ RLS বন্ধ। Anon key expose করার আগে policy decision জরুরি। Production credentials, API hosting ও end-to-end verification বাকি.
+**সম্পূর্ণ app live—এমন নিশ্চয়তা নেই।** Supabase project `my-blog` ও baseline তৈরি হয়েছে; সব 11 table-এ RLS চালু, কিন্তু কোনো policy নেই—anon/authenticated table access তাই বন্ধ থাকবে। Server DB connection, runtime credentials, API hosting ও full-stack validation বাকি.
 
 ## প্রথমে যে বিষয়গুলো ঠিক করুন
 
 1. **Supabase PostgreSQL:** project তৈরি হয়েছে; dashboard থেকে connection URI নিয়ে শুধু Express API runtime host-এ secret হিসেবে রাখুন। URI docs/source control-এ নয়.
-2. **Migration sets:** `drizzle-postgres/` হলো active PostgreSQL path; `0000_great_mulholland_black.sql` নতুন Supabase project-এ apply ও schema-verified হয়েছে। `drizzle-legacy-mysql/` পুরোনো MySQL archive—PostgreSQL-এ চালাবেন না.
+2. **Migration sets:** `drizzle-postgres/` হলো active PostgreSQL path; baseline `0000_great_mulholland_black.sql` এবং RLS `0001_enable_rls_on_app_tables.sql` Supabase-এ apply হয়েছে। Drizzle migration ledger sync; `drizzle-legacy-mysql/` archive PostgreSQL-এ চালাবেন না.
 3. **API hosting:** Express/tRPC server চালাতে পারে এমন Node.js runtime host বাছুন, অথবা আলাদা adapter implement ও verify করুন। এই source-এ Vercel Functions/Express adapter নেই।
 4. **Frontend/API routing:** API আলাদা host-এ হলে `/api/trpc`, OAuth callback, public app URL এবং proxy/rewrite routing configure ও test করুন।
 5. **Storage/secrets:** Supabase Storage bucket/policy ও app integration values নির্দিষ্ট করুন। OAuth, owner identity, `JWT_SECRET` ও external API credentials নিরাপদে API runtime host-এ configure করুন। কোনো `VITE_*` client value-এ secret দেবেন না।
