@@ -1,4 +1,4 @@
-import mysql from "mysql2/promise";
+import { Pool } from "pg";
 
 const DATABASE_URL = process.env.DATABASE_URL;
 
@@ -6,6 +6,8 @@ if (!DATABASE_URL) {
   console.error("DATABASE_URL environment variable is not set");
   process.exit(1);
 }
+
+const pool = new Pool({ connectionString: DATABASE_URL });
 
 // Sample blog posts in multiple languages
 const samplePosts = [
@@ -112,21 +114,16 @@ const samplePosts = [
 ];
 
 async function seedDatabase() {
-  let connection;
   try {
-    // Create connection
-    connection = await mysql.createConnection(DATABASE_URL);
-
     console.log("🌱 Starting to seed blog posts...");
 
-    // Get the owner ID (first admin user)
-    const [users] = await connection.query(
-      "SELECT id FROM users WHERE role = 'admin' LIMIT 1"
+    const { rows: users } = await pool.query(
+      "SELECT id FROM users WHERE role = 'admin' LIMIT 1",
     );
-    
-    if (!users || users.length === 0) {
+    if (!users.length) {
       console.error("❌ No admin user found. Please create an admin user first.");
-      process.exit(1);
+      process.exitCode = 1;
+      return;
     }
 
     const authorId = users[0].id;
@@ -134,31 +131,19 @@ async function seedDatabase() {
 
     for (const post of samplePosts) {
       console.log(`📝 Creating post: ${post.title}`);
-
-      // Insert post
-      const [result] = await connection.query(
-        "INSERT INTO posts (title, slug, content, excerpt, authorId, published, publishedAt, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), NOW())",
-        [
-          post.title,
-          post.slug,
-          post.content,
-          post.excerpt,
-          authorId,
-          "published",
-          new Date(),
-        ]
+      const { rows } = await pool.query(
+        'INSERT INTO posts (title, slug, content, excerpt, "authorId", published, "publishedAt", "createdAt", "updatedAt") VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW()) RETURNING id',
+        [post.title, post.slug, post.content, post.excerpt, authorId, "published", new Date()],
       );
-
-      console.log(`✅ Post created: ${post.title} (ID: ${result.insertId})`);
+      console.log(`✅ Post created: ${post.title} (ID: ${rows[0].id})`);
     }
 
     console.log("✨ Database seeding completed successfully!");
-    await connection.end();
-    process.exit(0);
   } catch (error) {
     console.error("❌ Error seeding database:", error.message);
-    if (connection) await connection.end();
-    process.exit(1);
+    process.exitCode = 1;
+  } finally {
+    await pool.end();
   }
 }
 

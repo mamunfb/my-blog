@@ -1,164 +1,68 @@
 # Blog Website Setup Guide
 
-এই গাইডটি আপনার ব্লগ ওয়েবসাইট সম্পূর্ণভাবে সেটআপ করতে সাহায্য করবে।
+এই গাইডটি অ্যাপের সেটআপ ও চালুর পরিকল্পনা বোঝায়। **Supabase project `my-blog` (Singapore, ref `mbwtfbpoefqjfbnxozbx`) তৈরি হয়েছে এবং baseline schema apply হয়েছে। RLS সব 11 table-এ বন্ধ; anon key expose করার আগে policy decision জরুরি। Runtime values, API hosting path এবং production validation এখনও configure/verify করতে হবে। App live—এমন দাবি নয়।**
 
-## ১. ব্লগ পোস্ট তৈরি করুন
+## Database ও deployment অবস্থা
 
-### Admin প্যানেলে প্রবেশ করুন
-1. ওয়েবসাইটে লগইন করুন
-2. নেভিগেশন বারে "Admin" বাটন ক্লিক করুন
-3. `/admin` পেজে যাবেন
+- অ্যাপের API হলো Express + tRPC। Supabase PostgreSQL এবং পরিকল্পিত object storage-এর জন্য; Supabase Express API server-এর বিকল্প নয়।
+- `drizzle.config.ts` PostgreSQL dialect ব্যবহার করে এবং migration output `drizzle-postgres/`। `0000_great_mulholland_black.sql` নতুন project-এ apply হয়েছে; Supabase 11টি table ও 0 row দেখিয়েছে। App runtime connection/CRUD এখনও পরীক্ষা হয়নি।
+- `drizzle-legacy-mysql/`-এ পুরোনো MySQL migration chain ও snapshots archive হিসেবে আছে; এগুলো Supabase PostgreSQL-এ চালাবেন না। `drizzle/`-এ বর্তমান schema/relations রাখা আছে।
+- `pnpm db:generate`, `pnpm db:migrate` এবং `pnpm db:push` package scripts-এ আছে। `db:migrate`-এর জন্য `DATABASE_URL` আবশ্যক। Production database-এ command চালানোর আগে generated SQL review, target URI যাচাই এবং backup নিশ্চিত করুন।
+- Source-এ Vercel Functions বা Express adapter নেই। Vercel-এ শুধু frontend build করলে `/api/trpc` এবং অন্য server route চলবে না। Express server-এর জন্য compatible Node.js runtime host এবং frontend-to-API routing আগে ঠিক করুন।
 
-### নতুন ব্লগ পোস্ট তৈরি করুন
-1. Admin প্যানেলে "Create Post" ট্যাবে যান
-2. নিম্নলিখিত তথ্য পূরণ করুন:
-   - **Title**: পোস্টের শিরোনাম
-   - **Slug**: URL-বান্ধব নাম (যেমন: my-first-post)
-   - **Content**: পোস্টের মূল কন্টেন্ট (HTML সাপোর্ট করে)
-   - **Featured Image**: পোস্টের প্রধান ছবি
-   - **Category**: ক্যাটাগরি নির্বাচন করুন
-   - **Tags**: ট্যাগ যোগ করুন
-3. "Create Post" বাটন ক্লিক করুন
+## ১. লোকাল ডেভেলপমেন্ট
 
-### স্বয়ংক্রিয় অনুবাদ ব্যবহার করুন
-1. পোস্ট তৈরির পর, "Translate" বাটন ক্লিক করুন
-2. অনুবাদ করতে চাওয়া ভাষা নির্বাচন করুন
-3. AI স্বয়ংক্রিয়ভাবে পোস্ট অনুবাদ করবে
+প্রজেক্ট root-এ:
 
-### ড্র্যাফট সংরক্ষণ
-- ফর্ম স্বয়ংক্রিয়ভাবে প্রতি ৩০ সেকেন্ডে ড্র্যাফট সংরক্ষণ করে
-- "Restore Draft" বাটন দিয়ে পূর্ববর্তী ড্র্যাফট পুনরুদ্ধার করতে পারেন
+```bash
+pnpm install
+pnpm dev
+```
 
-## ২. কাস্টম ডোমেইন সেটআপ করুন
+বিদ্যমান package scripts-এর মধ্যে `pnpm check`, `pnpm test`, `pnpm build`, `pnpm start`, `pnpm db:generate`, `pnpm db:migrate` এবং `pnpm db:push` রয়েছে। Database migration চালাতে `DATABASE_URL`-কে কেবল নির্দিষ্ট PostgreSQL development/staging database-এ নির্দেশ করুন।
 
-### Management UI থেকে ডোমেইন সংযুক্ত করুন
-1. Management UI খুলুন (ডান পাশের প্যানেল)
-2. "Settings" → "Domains" যান
-3. নিম্নলিখিত অপশন থেকে বেছে নিন:
-   - **Auto-generated Domain**: `yourname.manus.space` (বিনামূল্যে)
-   - **Custom Domain**: আপনার নিজস্ব ডোমেইন সংযুক্ত করুন
-   - **Purchase Domain**: নতুন ডোমেইন ক্রয় করুন
+## ২. Supabase PostgreSQL সেটআপ
 
-### কাস্টম ডোমেইন সংযুক্ত করার ধাপ
-1. আপনার ডোমেইন প্রদানকারীতে লগইন করুন
-2. DNS সেটিংসে যান
-3. Manus দ্বারা প্রদত্ত CNAME রেকর্ড যোগ করুন
-4. পরিবর্তনগুলি প্রসেস হতে ২৪ ঘন্টা অপেক্ষা করুন
+তৈরি project `my-blog`-এর dashboard থেকে PostgreSQL connection URI নিন।
 
-## ৩. Google Search Console সেটআপ করুন
+```text
+postgresql://<user>:<password>@<host>:5432/<database>
+```
 
-### সাইটম্যাপ জমা দিন
-1. [Google Search Console](https://search.google.com/search-console) খুলুন
-2. আপনার ডোমেইন যোগ করুন
-3. "Sitemaps" সেকশনে যান
-4. নিম্নলিখিত URL জমা দিন:
-   ```
-   https://yourdomain.com/sitemap.xml
-   ```
+এটি placeholder format, বাস্তব credential নয়। আসল URI কেবল server-side secret manager/runtime settings-এ রাখবেন; source control, documentation বা public client variable-এ নয়। Runtime অনুযায়ী direct/pooler connection এবং SSL/network settings যাচাই করুন।
 
-### ডোমেইন যাচাই করুন
-1. Search Console-এ "Settings" → "Verification" যান
-2. প্রদত্ত যাচাইকরণ কোড কপি করুন
-3. আপনার ডোমেইনের HTML ফাইলে যোগ করুন অথবা
-4. DNS রেকর্ডে TXT রেকর্ড যোগ করুন
+Database setup:
 
-### কর্মক্ষমতা মনিটর করুন
-- Search Console-এ নিয়মিত ক্লিক, ইম্প্রেশন এবং র‍্যাঙ্কিং ডেটা দেখুন
-- ক্রল ত্রুটি এবং মোবাইল ব্যবহারযোগ্যতা সমস্যা সমাধান করুন
+1. বর্তমান project-এ baseline migration apply হয়েছে; অন্য dev/staging target ব্যবহার করলে সেটি আলাদাভাবে ঠিক করুন।
+2. `drizzle-postgres/`-এর active PostgreSQL migration review করুন। `drizzle-legacy-mysql/` থেকে কিছু apply করবেন না।
+3. `pnpm db:generate` কেবল schema change থেকে migration generate করতে ব্যবহার করুন; generated SQL review করুন।
+4. `DATABASE_URL` সঠিক target-এ সেট করে `pnpm db:migrate` চালান। `pnpm db:push` generate ও migrate একসঙ্গে চালায়; production-এ না চালিয়ে reviewed migration rollout ব্যবহার করুন।
+5. Tables/constraints যাচাই হয়েছে; runtime `DATABASE_URL` configure করার পর API read/write ও backup/restore পরীক্ষা করুন।
 
-## ৪. নিউজলেটার সাবস্ক্রিপশন পরিচালনা করুন
+RLS বর্তমানে বন্ধ; Supabase anon key expose করার আগে access policy/RLS নির্ধারণ ও test করুন। Storage ব্যবহার করলে bucket, access policy এবং app integration-এর variable/configuration contract আলাদাভাবে নিশ্চিত করুন।
 
-### সাবস্ক্রাইবার দেখুন
-1. Admin প্যানেলে "Newsletter" ট্যাবে যান
-2. সমস্ত সাবস্ক্রাইবারের তালিকা দেখুন
-3. সাবস্ক্রাইবার পরিসংখ্যান দেখুন
+## ৩. Runtime environment ও secret
 
-### সাবস্ক্রিপশন পরিচালনা করুন
-- সক্রিয় সাবস্ক্রাইবার: যারা সাবস্ক্রাইব করেছেন
-- নিষ্ক্রিয় সাবস্ক্রাইবার: যারা আনসাবস্ক্রাইব করেছেন
-- সাবস্ক্রাইবার পছন্দ: ভাষা এবং কন্টেন্ট পছন্দ
+`DATABASE_URL`, `JWT_SECRET`, OAuth/application credential, owner identity এবং ব্যবহৃত external API credential server-side runtime host-এ দিন—শুধু frontend/Vercel build settings-এ নয়। Final code-এর required variable list যাচাই করুন। `VITE_*` মান client bundle-এ অন্তর্ভুক্ত হতে পারে; সেখানে secret দেবেন না। কোনো বাস্তব key/password commit বা docs-এ লিখবেন না।
 
-## ৫. বিশ্লেষণ এবং মেট্রিক্স
+## ৪. API hosting ও app workflow
 
-### ভাষা বিশ্লেষণ দেখুন
-1. Admin প্যানেলে "Analytics" ট্যাবে যান
-2. ভাষা ব্যবহার পরিসংখ্যান দেখুন
-3. সবচেয়ে জনপ্রিয় ভাষা চিহ্নিত করুন
+Express process চালাতে সক্ষম Node.js host নির্বাচন করুন বা আলাদা adapter বাস্তবায়ন ও পরীক্ষা করুন। Frontend এবং API আলাদা host-এ হলে `/api/trpc`, OAuth callback ও অন্যান্য API request-এর routing/rewrite configure ও test করুন। API, database, authentication এবং storage সচল হওয়ার পর Admin, post, translation, newsletter ও upload workflow যাচাই করুন। কোনো live production URL ধরে নেবেন না।
 
-### সোশ্যাল শেয়ারিং মেট্রিক্স দেখুন
-1. Admin প্যানেলে "Social Sharing" ট্যাবে যান
-2. প্রতিটি প্ল্যাটফর্মে শেয়ার সংখ্যা দেখুন
-3. সবচেয়ে শেয়ার করা পোস্ট চিহ্নিত করুন
+## ৫. ডোমেইন ও SEO
 
-## ৬. কমেন্ট এবং রেটিং পরিচালনা করুন
+পূর্ণ app deploy ও smoke test হওয়ার পরে custom domain, HTTPS, sitemap এবং Google Search Console configure করুন। Frontend এবং API-র public URL/route একে অপরের সঙ্গে সামঞ্জস্যপূর্ণ কি না নিশ্চিত করুন।
 
-### কমেন্ট অনুমোদন করুন
-1. প্রতিটি ব্লগ পোস্টের নিচে কমেন্ট সেকশন দেখুন
-2. নতুন কমেন্ট অনুমোদন বা প্রত্যাখ্যান করুন
-3. স্প্যাম কমেন্ট ফিল্টার করুন
+## সমস্যা সমাধান
 
-### রেটিং পর্যালোচনা করুন
-- প্রতিটি পোস্টের গড় রেটিং দেখুন
-- ব্যবহারকারীর প্রতিক্রিয়া বিশ্লেষণ করুন
+- **PostgreSQL connection failure:** runtime host-এর `DATABASE_URL`, Supabase project status, connection mode, SSL/network setting ও credential যাচাই করুন; URI প্রকাশ করবেন না।
+- **Migration/table সমস্যা:** `drizzle-postgres/` active migration path যাচাই করুন; archived `drizzle-legacy-mysql/` কখনো PostgreSQL-এ চালাবেন না।
+- **`/api/trpc` কাজ করে না:** Express API host ও frontend-to-API routing configure হয়েছে কি না পরীক্ষা করুন। Vercel static frontend একা API চালায় না।
+- **Seed data:** `server/seedSamplePosts.mjs` PostgreSQL ব্যবহার করে এবং `DATABASE_URL` চায়, কিন্তু এর জন্য package-level `seed` script নেই। [SEED_DATA_GUIDE.md](./SEED_DATA_GUIDE.md) দেখুন।
 
-## ৭. পারফরম্যান্স অপটিমাইজেশন
+## সহায়তা ও সম্পর্কিত নথি
 
-### ইমেজ অপটিমাইজেশন
-- সমস্ত ছবি স্বয়ংক্রিয়ভাবে অপ্টিমাইজ করা হয়
-- Lazy loading স্বয়ংক্রিয়ভাবে সক্ষম
-- AVIF এবং WebP ফরম্যাট সাপোর্ট
-
-### পেজ স্পীড
-- Google PageSpeed Insights দিয়ে পরীক্ষা করুন
-- মোবাইল এবং ডেস্কটপ উভয়ের জন্য অপ্টিমাইজ করুন
-
-## ৮. সোশ্যাল মিডিয়া ইন্টিগ্রেশন
-
-### শেয়ারিং বাটন
-- প্রতিটি পোস্টে নিম্নলিখিত প্ল্যাটফর্মে শেয়ার করুন:
-  - Facebook
-  - Twitter
-  - LinkedIn
-  - WhatsApp
-  - Telegram
-  - Email
-  - Copy Link
-
-### Open Graph ট্যাগ
-- সমস্ত পোস্টে স্বয়ংক্রিয়ভাবে Open Graph ট্যাগ যোগ করা হয়
-- সোশ্যাল মিডিয়ায় সুন্দর প্রিভিউ দেখান
-
-## ৯. ১০০+ ভাষা সমর্থন
-
-### ভাষা পরিবর্তন করুন
-- নেভিগেশন বারে গ্লোব আইকন ক্লিক করুন
-- ভাষা সার্চ করুন বা তালিকা থেকে নির্বাচন করুন
-- স্বয়ংক্রিয়ভাবে সমস্ত UI অনুবাদ হবে
-
-### RTL ভাষা সাপোর্ট
-- আরবি, ফারসি, উর্দু এবং অন্যান্য RTL ভাষা সম্পূর্ণ সমর্থিত
-- লেআউট স্বয়ংক্রিয়ভাবে সামঞ্জস্য করা হয়
-
-## সাধারণ সমস্যা সমাধান
-
-### পোস্ট প্রকাশিত হচ্ছে না
-- নিশ্চিত করুন যে "Published" স্ট্যাটাস নির্বাচিত
-- ক্যাটাগরি এবং ট্যাগ সঠিক কিনা পরীক্ষা করুন
-
-### ইমেজ আপলোড হচ্ছে না
-- ইমেজ সাইজ ১০ MB এর কম কিনা চেক করুন
-- সমর্থিত ফরম্যাট: JPG, PNG, WebP, GIF
-
-### কমেন্ট দৃশ্যমান নয়
-- নিশ্চিত করুন যে কমেন্ট অনুমোদিত
-- ক্যাশ সাফ করুন এবং পেজ রিফ্রেশ করুন
-
-## সহায়তা এবং সংস্থান
-
-- **Documentation**: আরও তথ্যের জন্য README.md দেখুন
-- **Google Search Console**: https://search.google.com/search-console
-- **Manus Support**: https://help.manus.im
-
----
-
-**সর্বশেষ আপডেট**: জুন ২০২৬
+- [README.md](./README.md)
+- [VERCEL_SUPABASE_DEPLOYMENT.md](./VERCEL_SUPABASE_DEPLOYMENT.md)
+- [DEPLOYMENT_CHECKLIST.md](./DEPLOYMENT_CHECKLIST.md)
+- [SEED_DATA_GUIDE.md](./SEED_DATA_GUIDE.md)

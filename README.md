@@ -1,243 +1,79 @@
 # Professional Multilingual Blog Platform
 
-A feature-rich, SEO-optimized blog website with 100+ language support, advanced admin panel, newsletter system, and automated translation capabilities.
+A React/Vite blog application with an Express and tRPC API, database-backed content, and admin features. **Supabase project `my-blog` (Singapore, ref `mbwtfbpoefqjfbnxozbx`) has been created and the PostgreSQL baseline schema applied. Row Level Security (RLS) is disabled on its 11 tables and must be addressed before exposing a Supabase anon key. The app itself is not deployed or production-validated.**
 
-## 🌍 Features
+## Architecture and deployment status
 
-### Multilingual Support
-- **100+ Languages**: Full support for all major world languages
-- **Automatic Country Detection**: IP-based language detection
-- **RTL Support**: Arabic, Hebrew, Urdu, Persian, and other RTL languages
-- **Language Switching**: Persistent language preferences with localStorage
-- **Auto-Translation**: LLM-powered post translation to any language
+- **Web client:** React 19 and Vite.
+- **Application/API server:** Express 4 with tRPC 11. The server serves the built client and exposes routes such as `/api/trpc`.
+- **Database target:** PostgreSQL hosted by Supabase. Supabase is for PostgreSQL and planned object storage, not the app's API server or a replacement for Express/tRPC.
+- **Active PostgreSQL migrations:** `drizzle-postgres/` is the active PostgreSQL migration output path configured by `drizzle.config.ts`; it contains `0000_great_mulholland_black.sql` and its metadata. This baseline was applied to the new Supabase project; Supabase reports 11 tables and 0 rows. Review and test later migrations before production use.
+- **Archived MySQL migrations:** `drizzle-legacy-mysql/` contains the old MySQL migration chain and snapshots. It is retained for reference only and must not be applied to Supabase PostgreSQL. The `drizzle/` directory holds the current schema/relations and is not the old migration archive.
+- **Hosting caveat:** the source has no Vercel Functions or Express-to-Vercel adapter. Vercel may host the client, but a complete deployment also needs a compatible host for the Express server (or a separately implemented and validated adapter) and a working route from the client to that API. A static Vercel deployment alone is not the complete app.
 
-### Content Management
-- **Admin Panel**: Full-featured dashboard for managing posts, analytics, and settings
-- **Post Creation**: Rich HTML editor with featured image upload
-- **Draft Auto-Save**: Automatic draft saving every 30 seconds
-- **Post Status**: Draft, published, and archived states
-- **Featured Posts**: Highlight important posts on homepage
+Before deployment, decide the RLS/policy model, securely configure the Supabase PostgreSQL connection URI on a compatible Express runtime host, configure storage only after its integration details are confirmed, select frontend-to-API routing, and set runtime secrets. The app has not been deployed. See [VERCEL_SUPABASE_DEPLOYMENT.md](./VERCEL_SUPABASE_DEPLOYMENT.md) and [DEPLOYMENT_CHECKLIST.md](./DEPLOYMENT_CHECKLIST.md).
 
-### SEO Optimization
-- **Dynamic XML Sitemap**: Automatically generated from published posts
-- **Robots.txt**: Configurable crawler directives
-- **Meta Tags**: Title, description, keywords, Open Graph, Twitter Cards
-- **Hreflang Tags**: Language alternate links for all 100+ languages
-- **JSON-LD Structured Data**: Article and website schemas
-- **Breadcrumb Navigation**: Improved site hierarchy understanding
-- **Image Optimization**: Lazy loading, WebP/AVIF formats, responsive images
+## Features
 
-### Engagement Features
-- **Comment System**: Comments with 5-star ratings and approval workflow
-- **Social Sharing**: 7 platforms (Facebook, Twitter, LinkedIn, WhatsApp, Telegram, Email, Reddit)
-- **Share Metrics**: Track shares and clicks per platform
-- **Newsletter Subscription**: Email-based subscriber management
-- **Automated Notifications**: Email subscribers on new post publication
+### Multilingual and content management
 
-### Analytics & Tracking
-- **Language Analytics**: Track user engagement by language
-- **View Counts**: Monitor post popularity
-- **Time Spent**: Measure reader engagement
-- **Social Metrics**: Track sharing activity per platform
-- **Admin Dashboard**: Comprehensive analytics visualization
+- Language selection and right-to-left layout support
+- Admin workflows for posts, drafts, categories, and tags
+- Featured content and image upload flows
+- Translation and content-generation integrations, subject to credentials and runtime configuration
 
-### Technical Infrastructure
-- **React 19**: Modern frontend framework
-- **Tailwind CSS 4**: Utility-first styling
-- **Express 4**: Lightweight backend server
-- **tRPC 11**: End-to-end type-safe APIs
-- **Drizzle ORM**: Type-safe database queries
-- **MySQL/TiDB**: Reliable database backend
-- **Manus OAuth**: Secure authentication
-- **LLM Integration**: AI-powered content generation
+### SEO and engagement
 
-## 🚀 Quick Start
+- Sitemap, robots, metadata, and structured-data features
+- Comments, ratings, newsletter subscriptions, and social sharing
+- Analytics and engagement tracking
 
-### 1. First Blog Post
+Feature availability in a deployed environment depends on the API host, database connection, RLS/security configuration, storage setup, and external service configuration. The database project and baseline schema exist, but the app runtime and these integrations are not yet configured.
 
-1. Log in to your blog admin panel
-2. Navigate to **Admin Panel** → **Create Post** tab
-3. Fill in the post details:
-   - **Title**: Your post title
-   - **Slug**: URL-friendly version (auto-generated)
-   - **Excerpt**: Short summary
-   - **Content**: Full post content (HTML supported)
-   - **Featured Image**: Upload a cover image
-   - **Featured**: Toggle to highlight on homepage
-4. Click **Create Post**
+## Technology
 
-### 2. Domain Setup
+- React, Vite, Tailwind CSS
+- Express and tRPC
+- Drizzle ORM
+- PostgreSQL on the created Supabase project
+- Manus OAuth and associated integrations where configured
 
-See [DOMAIN_SETUP_GUIDE.md](./DOMAIN_SETUP_GUIDE.md) for:
-- Setting up a custom domain
-- Configuring Google Search Console
-- SEO optimization tips
-- Monitoring search performance
+## Documentation
 
-### 3. Newsletter Automation
+- [SETUP_GUIDE.md](./SETUP_GUIDE.md) — application setup notes
+- [VERCEL_SUPABASE_DEPLOYMENT.md](./VERCEL_SUPABASE_DEPLOYMENT.md) — database target and hosting requirements
+- [QUICK_START_VERCEL.md](./QUICK_START_VERCEL.md) — deployment readiness overview
+- [DEPLOYMENT_CHECKLIST.md](./DEPLOYMENT_CHECKLIST.md) — pre-deployment and validation checklist
+- [SEED_DATA_GUIDE.md](./SEED_DATA_GUIDE.md) — seed command and compatibility notes
+- [LAUNCH_CHECKLIST.md](./LAUNCH_CHECKLIST.md) — launch planning checklist
 
-See [EMAIL_AUTOMATION_GUIDE.md](./EMAIL_AUTOMATION_GUIDE.md) for:
-- Setting up email notifications
-- Configuring Heartbeat cron jobs
-- Monitoring email delivery
-- Troubleshooting tips
+## Development commands
 
-## 📚 Documentation
+Run from the repository root with pnpm (the repository includes `pnpm-lock.yaml`):
 
-### Setup Guides
-- [SETUP_GUIDE.md](./SETUP_GUIDE.md) - Initial setup and configuration
-- [DOMAIN_SETUP_GUIDE.md](./DOMAIN_SETUP_GUIDE.md) - Custom domain and SEO setup
-- [EMAIL_AUTOMATION_GUIDE.md](./EMAIL_AUTOMATION_GUIDE.md) - Newsletter email automation
-
-### Key Files
-- `client/src/pages/AdminPanel.tsx` - Admin dashboard
-- `client/src/pages/Home.tsx` - Homepage with featured posts
-- `client/src/pages/BlogPost.tsx` - Individual post page
-- `server/routers.ts` - tRPC API procedures
-- `server/db.ts` - Database query helpers
-- `drizzle/schema.ts` - Database schema
-
-## 🎨 Admin Panel Features
-
-### Create Post Tab
-- Rich HTML editor for content
-- Featured image upload
-- Slug auto-generation
-- Featured post toggle
-- Draft auto-save
-
-### Analytics Tab
-- Total views by language
-- Language distribution pie chart
-- Top languages bar chart
-- Engagement statistics
-- Key insights and recommendations
-
-### Settings Tab
-- Blog title and description
-- Email configuration
-- Notification preferences
-
-## 🌐 Language Support
-
-Supported languages include:
-
-**European**: English, Spanish, French, German, Italian, Portuguese, Dutch, Swedish, Norwegian, Danish, Finnish, Polish, Czech, Romanian, Greek, Hungarian, Turkish, Russian, Ukrainian, Bulgarian, Croatian, Serbian, Slovak, Slovenian, Lithuanian, Latvian, Estonian, Icelandic, Irish, Welsh
-
-**Asian**: Chinese (Simplified & Traditional), Japanese, Korean, Hindi, Bengali, Tamil, Telugu, Kannada, Malayalam, Marathi, Gujarati, Punjabi, Urdu, Thai, Vietnamese, Indonesian, Malay, Tagalog, Khmer, Lao, Burmese, Sinhala
-
-**Middle Eastern & African**: Arabic, Hebrew, Persian, Turkish, Swahili, Amharic, Yoruba, Igbo, Hausa, Zulu, Xhosa
-
-**Americas**: Portuguese (Brazilian), Spanish (Mexican), French (Canadian), English (American)
-
-**Central Asian**: Kazakh, Uzbek, Turkmen, Kyrgyz
-
-**Caucasus**: Georgian, Armenian, Azerbaijani
-
-**Baltic**: Lithuanian, Latvian, Estonian
-
-## 📊 Database Schema
-
-### Main Tables
-- `users` - User accounts and authentication
-- `posts` - Blog posts
-- `categories` - Post categories
-- `tags` - Post tags
-- `comments` - Post comments
-- `commentRatings` - Comment ratings (1-5 stars)
-- `newsletter_subscribers` - Newsletter subscriptions
-- `languageAnalytics` - Language usage tracking
-- `socialSharingMetrics` - Social share tracking
-- `postDrafts` - Auto-saved drafts
-
-## 🔒 Security Features
-
-- **OAuth Authentication**: Manus OAuth for secure login
-- **Role-Based Access**: Admin and user roles
-- **Admin-Only Operations**: Protected procedures for sensitive actions
-- **HTTPS**: SSL/TLS encryption
-- **CSRF Protection**: Built-in security headers
-
-## 📈 Performance Optimization
-
-- **Image Optimization**: Lazy loading, WebP/AVIF formats
-- **Responsive Design**: Mobile-first approach
-- **Code Splitting**: Efficient bundle loading
-- **Caching**: Browser and server-side caching
-- **CDN**: Manus-provided CDN for static assets
-
-## 🛠️ Development
-
-### Project Structure
-```
-client/
-  src/
-    pages/          - Page components
-    components/     - Reusable UI components
-    lib/           - Utility functions
-    contexts/      - React contexts
-    hooks/         - Custom hooks
-server/
-  routers.ts       - tRPC procedures
-  db.ts            - Database queries
-  *Router.ts       - Feature-specific routers
-drizzle/
-  schema.ts        - Database schema
-  migrations/      - Database migrations
-```
-
-### Running Locally
 ```bash
-# Install dependencies
 pnpm install
-
-# Start development server
 pnpm dev
-
-# Run tests
+pnpm check
 pnpm test
-
-# Build for production
 pnpm build
+pnpm start
 ```
 
-### Database Migrations
+The package currently defines these database commands:
+
 ```bash
-# Generate migration from schema changes
-pnpm drizzle-kit generate
-
-# Apply migrations
-# (Use webdev_execute_sql in Manus UI)
+pnpm db:generate
+pnpm db:migrate
+pnpm db:push
 ```
 
-## 🚀 Deployment
+`db:push` runs generation followed by migration; `db:migrate` requires `DATABASE_URL`. Review generated SQL and point the command only at the intended database. The active PostgreSQL Drizzle config writes migrations to `drizzle-postgres/`; do not use `drizzle-legacy-mysql/` for PostgreSQL.
 
-1. Save a checkpoint in the Management UI
-2. Click the **Publish** button
-3. Wait for deployment to complete
-4. Visit your site at the provided URL
+There is no `seed` package script. The existing PostgreSQL seed file can be invoked directly with `node server/seedSamplePosts.mjs`; it requires `DATABASE_URL` and an existing admin user. See [SEED_DATA_GUIDE.md](./SEED_DATA_GUIDE.md). Use a non-production database first, and do not place credentials in source control or documentation.
 
-## 📞 Support
+## Environment and secrets
 
-For issues or questions:
+Set server-side secrets in the environment of the host that runs Express—not only in Vercel's static frontend build settings. `DATABASE_URL` must be the PostgreSQL connection URI supplied by the configured database provider. Configure OAuth, owner identity, and any required external API credentials in the same runtime environment. Client-exposed `VITE_*` settings are build-time values and must never contain secrets. Confirm the complete required variable list against the final implementation before launch.
 
-1. Check the relevant documentation guide
-2. Review error messages in browser console
-3. Check server logs in `.manus-logs/`
-4. Contact support through Manus dashboard
-
-## 📝 License
-
-This project is built with Manus and follows Manus terms of service.
-
-## 🎯 Next Steps
-
-1. **Publish Your First Post**: Use the Admin Panel to create and publish content
-2. **Set Up Custom Domain**: Follow DOMAIN_SETUP_GUIDE.md
-3. **Configure Google Search Console**: Submit your sitemap for indexing
-4. **Set Up Email Automation**: Follow EMAIL_AUTOMATION_GUIDE.md
-5. **Monitor Analytics**: Track engagement in the Admin Panel
-
----
-
-**Built with Manus** - The all-in-one platform for building and deploying web applications.
+Still to configure/confirm: RLS and access policies, the secret PostgreSQL connection URI, Express API host and frontend routing, production OAuth/owner values, required external-service secrets, and Supabase Storage bucket/policy/integration settings. No production URL or live site is asserted here.

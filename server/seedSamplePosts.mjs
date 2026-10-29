@@ -1,14 +1,11 @@
-import mysql from 'mysql2/promise';
+import { Pool } from "pg";
 
-const pool = mysql.createPool({
-  host: process.env.DB_HOST || 'localhost',
-  user: process.env.DB_USER || 'root',
-  password: process.env.DB_PASSWORD || '',
-  database: process.env.DB_NAME || 'blog',
-  waitForConnections: true,
-  connectionLimit: 10,
-  queueLimit: 0,
-});
+const DATABASE_URL = process.env.DATABASE_URL;
+if (!DATABASE_URL) {
+  console.error("DATABASE_URL environment variable is not set");
+  process.exit(1);
+}
+const pool = new Pool({ connectionString: DATABASE_URL });
 
 const samplePosts = [
   {
@@ -86,66 +83,49 @@ const samplePosts = [
 ];
 
 async function seedPosts() {
-  const connection = await pool.getConnection();
-  
   try {
-    console.log('🌱 Starting to seed sample blog posts...');
-    
-    // Get the first admin user
-    const [adminUsers] = await connection.execute(
-      'SELECT id FROM users WHERE role = ? LIMIT 1',
-      ['admin']
+    console.log("🌱 Starting to seed sample blog posts...");
+
+    const { rows: adminUsers } = await pool.query(
+      "SELECT id FROM users WHERE role = $1 LIMIT 1",
+      ["admin"],
     );
-    
-    if (adminUsers.length === 0) {
-      console.error('❌ No admin user found. Please create an admin user first.');
-      process.exit(1);
+    if (!adminUsers.length) {
+      console.error("❌ No admin user found. Please create an admin user first.");
+      process.exitCode = 1;
+      return;
     }
-    
+
     const adminId = adminUsers[0].id;
     console.log(`✅ Found admin user with ID: ${adminId}`);
-    
+
     for (const post of samplePosts) {
       try {
-        // Check if post already exists
-        const [existing] = await connection.execute(
-          'SELECT id FROM posts WHERE slug = ?',
-          [post.slug]
+        const { rows: existing } = await pool.query(
+          "SELECT id FROM posts WHERE slug = $1",
+          [post.slug],
         );
-        
-        if (existing.length > 0) {
+        if (existing.length) {
           console.log(`⚠️  Post already exists: "${post.title}"`);
           continue;
         }
-        
-        // Insert the post
-        const [result] = await connection.execute(
-          `INSERT INTO posts (title, slug, content, excerpt, authorId, categoryId, published, publishedAt, createdAt, updatedAt)
-           VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), NOW(), NOW())`,
-          [
-            post.title,
-            post.slug,
-            post.content,
-            post.excerpt,
-            adminId,
-            post.categoryId,
-            'published', // published status
-          ]
+
+        const { rows } = await pool.query(
+          'INSERT INTO posts (title, slug, content, excerpt, "authorId", "categoryId", published, "publishedAt", "createdAt", "updatedAt") VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW(), NOW()) RETURNING id',
+          [post.title, post.slug, post.content, post.excerpt, adminId, post.categoryId, "published"],
         );
-        
-        console.log(`✅ Created post: "${post.title}" (ID: ${result.insertId})`);
+        console.log(`✅ Created post: "${post.title}" (ID: ${rows[0].id})`);
       } catch (error) {
         console.error(`❌ Error creating post "${post.title}":`, error.message);
       }
     }
-    
-    console.log('\n✅ Sample posts seeded successfully!');
-    console.log('📝 You can now view these posts on the home page and in the admin panel.');
+
+    console.log("\n✅ Sample posts seeded successfully!");
+    console.log("📝 You can now view these posts on the home page and in the admin panel.");
   } catch (error) {
-    console.error('❌ Error seeding posts:', error);
-    process.exit(1);
+    console.error("❌ Error seeding posts:", error);
+    process.exitCode = 1;
   } finally {
-    await connection.release();
     await pool.end();
   }
 }
