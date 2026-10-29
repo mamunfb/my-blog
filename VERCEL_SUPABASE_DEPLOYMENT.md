@@ -1,323 +1,139 @@
-# Vercel + Supabase ডিপ্লয়মেন্ট গাইড - সম্পূর্ণ সেটআপ
+# Vercel + Supabase deployment planning guide
 
-এই গাইডে আপনার ব্লগ Vercel এবং Supabase-এ ডিপ্লয় করার সম্পূর্ণ প্রক্রিয়া দেখানো হয়েছে।
+**This is a deployment plan, not a claim that the app is deployed or currently live.** The app API remains Express/tRPC. Supabase project `my-blog` (ref `mbwtfbpoefqjfbnxozbx`, Singapore) is healthy and the PostgreSQL baseline has been applied; 11 tables were verified with 0 rows. RLS is enabled on all 11 tables and `pg_policies` is empty (no policies). Runtime credentials, API hosting, routing, and full-stack validation remain pending.
 
----
+## Architecture: responsibilities
 
-## ধাপ 1: Supabase ডাটাবেস সেটআপ (10 মিনিট)
+- **Supabase:** PostgreSQL database and planned object storage only. Supabase does not replace this app's Express/tRPC API server.
+- **Application API:** Express serves the client and exposes `/api/trpc`, OAuth/storage-related routes, sitemap, and scheduled endpoints. It needs a compatible Node.js runtime host.
+- **Vercel:** may host the static Vite frontend. The repository contains no Vercel function entry points or Express adapter, so a Vercel frontend deployment alone is not a complete deployment. Either select a compatible Express host and configure frontend-to-API routing, or separately implement and validate an appropriate adapter before treating Vercel as the full-app host.
 
-### 1.1 Supabase অ্যাকাউন্ট তৈরি করুন
+## 1. Provision Supabase PostgreSQL
 
-1. যান: https://supabase.com
-2. **Sign Up** ক্লিক করুন
-3. GitHub অ্যাকাউন্ট দিয়ে সাইন আপ করুন (সবচেয়ে সহজ)
-4. ইমেইল ভেরিফাই করুন
+1. **Completed:** project `my-blog` was created in Singapore (`ap-southeast-1`), ref `mbwtfbpoefqjfbnxozbx`. Obtain its PostgreSQL URI from the Supabase dashboard when configuring the server runtime.
+2. Obtain a PostgreSQL connection URI from the Supabase dashboard. Its general shape is:
 
-### 1.2 নতুন প্রজেক্ট তৈরি করুন
-
-1. Supabase ড্যাশবোর্ডে যান
-2. **New Project** ক্লিক করুন
-3. প্রজেক্ট নাম দিন: `blog-website`
-4. Password সেট করুন (নিরাপদ রাখুন)
-5. Region নির্বাচন করুন (আপনার কাছাকাছি)
-6. **Create new project** ক্লিক করুন
-7. ৩-৫ মিনিট অপেক্ষা করুন
-
-### 1.3 ডাটাবেস কানেকশন স্ট্রিং পান
-
-1. Supabase ড্যাশবোর্ডে যান
-2. বাম পাশে **Settings** ক্লিক করুন
-3. **Database** নির্বাচন করুন
-4. **Connection string** খুঁজুন
-5. **URI** কপি করুন (এটি দেখতে এমন হবে):
-   ```
-   postgresql://postgres:[PASSWORD]@[HOST]:5432/postgres
+   ```text
+   postgresql://<user>:<password>@<host>:5432/<database>
    ```
 
-**গুরুত্বপূর্ণ:** এই স্ট্রিং সংরক্ষণ করুন - পরে প্রয়োজন হবে!
+   This is a placeholder format, not a real credential. Store the actual URI only in a secret manager or the API host's protected environment settings. Select a direct or pooled connection appropriate to the runtime and confirm SSL/network requirements.
+3. Provision a Storage bucket only after its app integration contract and access policy are confirmed. Bucket name, access mode, and any storage-specific values remain to be configured; do not infer them from this guide.
 
----
+## 2. PostgreSQL migrations and archived MySQL migrations
 
-## ধাপ 2: আপনার প্রজেক্ট প্রস্তুত করুন (5 মিনিট)
+The current repository has a distinct active PostgreSQL set and an archived MySQL set:
 
-### 2.1 ZIP ফাইল আনজিপ করুন
+- **Active PostgreSQL path:** `drizzle.config.ts` uses PostgreSQL dialect and writes to `drizzle-postgres/`. The files `0000_great_mulholland_black.sql` (baseline) and `0001_enable_rls_on_app_tables.sql` (RLS enabled, no policies) are applied to the new project. The private Drizzle ledger has matching hashes/timestamps, preventing already-applied SQL from replaying. Test application connectivity and later upgrades before production use.
+- **Archived MySQL path:** `drizzle-legacy-mysql/` contains the former MySQL migration chain and snapshots, retained for historical reference. Do not run or copy these files into Supabase PostgreSQL.
+- `drizzle/` contains the current schema and relations; it is not the archived migration set.
 
-```bash
-unzip blog_website_complete.zip
-cd blog_website
-```
-
-### 2.2 ডিপেন্ডেন্সি ইনস্টল করুন
+The package currently defines:
 
 ```bash
-npm install
-# অথবা
-pnpm install
-```
-
-### 2.3 .env.local ফাইল তৈরি করুন
-
-প্রজেক্ট রুটে `.env.local` ফাইল তৈরি করুন:
-
-```bash
-cat > .env.local << 'EOF'
-# Database
-DATABASE_URL=postgresql://postgres:[YOUR_PASSWORD]@[YOUR_HOST]:5432/postgres
-
-# JWT Secret (যেকোনো দীর্ঘ র্যান্ডম স্ট্রিং)
-JWT_SECRET=your-super-secret-jwt-key-here-make-it-long-and-random
-
-# OAuth (Vercel ডিপ্লয়মেন্টের পরে পাবেন)
-VITE_APP_ID=your-app-id-here
-OAUTH_SERVER_URL=https://api.manus.im
-VITE_OAUTH_PORTAL_URL=https://app.manus.im
-
-# Owner Info
-OWNER_NAME=Your Name
-OWNER_OPEN_ID=your-open-id
-
-# API Keys (Vercel ডিপ্লয়মেন্টের পরে পাবেন)
-BUILT_IN_FORGE_API_URL=https://api.manus.im
-BUILT_IN_FORGE_API_KEY=your-api-key
-VITE_FRONTEND_FORGE_API_URL=https://api.manus.im
-VITE_FRONTEND_FORGE_API_KEY=your-frontend-key
-
-# Analytics
-VITE_ANALYTICS_ENDPOINT=https://analytics.example.com
-VITE_ANALYTICS_WEBSITE_ID=your-website-id
-EOF
-```
-
-**গুরুত্বপূর্ণ:** `[YOUR_PASSWORD]` এবং `[YOUR_HOST]` Supabase থেকে পাওয়া স্ট্রিংয়ে রিপ্লেস করুন।
-
-### 2.4 ডাটাবেস মাইগ্রেশন চালান
-
-```bash
-npm run db:push
-# অথবা
+pnpm db:generate
+pnpm db:migrate
 pnpm db:push
 ```
 
-এটি আপনার স্কিমা Supabase-এ তৈরি করবে।
+`db:generate` generates migrations from the current schema. `db:migrate` requires `DATABASE_URL` and applies migrations using the configured PostgreSQL path. `db:push` chains generation and migration. The Supabase project's private Drizzle ledger is seeded with hashes/timestamps for the applied baseline and RLS migration, preventing Drizzle from replaying them. Review generated changes and verify the target database before applying; prefer a reviewed migration rollout rather than unreviewed production schema changes. Runtime connection/CRUD remain untested.
 
----
+## 3. Configure the Express API runtime
 
-## ধাপ 3: GitHub-এ পুশ করুন (5 মিনিট)
+Choose the API runtime host before deploying the frontend. Configure its server-side environment with values required by the implementation, including:
 
-Vercel সহজেই GitHub থেকে ডিপ্লয় করতে পারে।
+- `DATABASE_URL`: Supabase PostgreSQL URI (secret)
+- `JWT_SECRET`: generated secret (secret)
+- `VITE_APP_ID`, `OAUTH_SERVER_URL`, and `OWNER_OPEN_ID`: valid OAuth/application configuration as required by the deployed app
+- `BUILT_IN_FORGE_API_URL` and `BUILT_IN_FORGE_API_KEY`: if the integration is enabled; key is secret
+- `VITE_APP_URL`, `OWNER_EMAIL`, and branding values where required by the implementation
+- Storage-specific settings only after their exact names and access policy are confirmed
 
-### 3.1 GitHub রেপোজিটরি তৈরি করুন
+Set secrets in the **Express runtime host**, not only in Vercel's frontend build environment. `VITE_*` values may be compiled into client assets and must not contain secrets. Verify the final required environment-variable list against the runtime code before launch.
 
-1. যান: https://github.com/new
-2. রেপোজিটরি নাম: `blog-website`
-3. **Public** নির্বাচন করুন
-4. **Create repository** ক্লিক করুন
+## 4. Build and host the frontend/API
 
-### 3.2 আপনার প্রজেক্ট পুশ করুন
+The repository scripts include `pnpm install`, `pnpm build`, and `pnpm start`; `build` compiles the Vite frontend and bundles the Express entry point, while `start` runs the Node server bundle. This is a Node server process, not a Vercel function definition. Verify the chosen API host supports the generated output, Node version, process startup, `PORT`, request body size, and static asset serving.
+
+If the frontend and API use separate domains, configure and test same-origin proxy/rewrite or client API routing for `/api/trpc` and other server routes. This repository does not provide a Vercel adapter or deployment rewrite configuration. Decide and test that route before publishing a frontend URL as the app URL.
+
+## 5. PostgreSQL schema status and next validation
+
+The baseline and RLS migrations have been applied to project `mbwtfbpoefqjfbnxozbx`; Supabase verified 11 public tables, 0 rows, expected enum/foreign-key structure, and RLS enabled on all 11 tables. The private Drizzle migration ledger has matching entries. The application has not yet connected using a runtime `DATABASE_URL`, so API reads/writes remain untested. Keep `drizzle-legacy-mysql/` out of the PostgreSQL apply path.
+
+**Security status:** RLS is enabled on all 11 tables and no policies exist; anon/authenticated roles therefore have no table access until policies are added. Do not rely on any client-facing data access yet. Configure and verify the Express runtime’s server-side DB role/connection before launch. The applied SQL is recorded below.
+
+### Supabase RLS state and applied SQL
+
+Supabase reports Row Level Security is now enabled on all 11 application tables. The user-approved SQL below was applied on 2026-10-29 as migration `enable_rls_on_app_tables`; Supabase reports `rls_enabled: true` for all tables. Querying `pg_policies` returned no rows, so no policies were added. This leaves anon/authenticated table access denied until policies are defined. Verify the Express runtime database role and privileges before relying on server-side access.
+
+```sql
+ALTER TABLE "public"."categories" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "public"."commentRatings" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "public"."comments" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "public"."languageAnalytics" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "public"."newsletter_subscribers" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "public"."postDrafts" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "public"."postTags" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "public"."posts" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "public"."socialSharingMetrics" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "public"."tags" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "public"."users" ENABLE ROW LEVEL SECURITY;
+```
+
+Supabase RLS documentation: https://supabase.com/docs/guides/database/postgres/row-level-security
+
+## 6. Seed data (optional)
+
+There is no package-level `seed` script. The existing PostgreSQL seed file can be invoked directly:
 
 ```bash
-cd blog_website
-
-# Git ইনিশিয়ালাইজ করুন
-git init
-git add .
-git commit -m "Initial commit: Blog website with Vercel + Supabase"
-
-# GitHub রেপোজিটরি যোগ করুন
-git branch -M main
-git remote add origin https://github.com/YOUR_USERNAME/blog-website.git
-git push -u origin main
+node server/seedSamplePosts.mjs
 ```
 
-**নোট:** `YOUR_USERNAME` আপনার GitHub ইউজারনেম দিয়ে রিপ্লেস করুন।
+It requires `DATABASE_URL` and an existing admin user, and inserts four sample posts while skipping matching slugs. Use a development/staging database first; see [SEED_DATA_GUIDE.md](./SEED_DATA_GUIDE.md). Do not place credentials in command history, source control, or documentation.
 
----
+## 7. Deploy only after the API path works
 
-## ধাপ 4: Vercel-এ ডিপ্লয় করুন (10 মিনিট)
+Before connecting a public domain, verify that the Express process starts on the selected host, database access works, frontend requests reach the API, OAuth callback URLs are correct, storage uploads work if configured, and secrets are available at runtime. A Vercel URL serving a static bundle is not proof that the complete application is operational. Do not announce or describe the app as live until full-stack smoke tests pass.
 
-### 4.1 Vercel অ্যাকাউন্ট তৈরি করুন
+## Values still to configure or confirm
 
-1. যান: https://vercel.com
-2. **Sign Up** ক্লিক করুন
-3. GitHub দিয়ে সাইন আপ করুন
-4. অনুমতি দিন
+- Client-facing access-policy design (if needed) and Express server database-role/connection verification
+- PostgreSQL connection URI, direct/pooler choice, TLS/network settings, and server-side secret storage
+- Application CRUD smoke test through the selected Express runtime
+- API runtime host and process configuration
+- Frontend-to-API routing, OAuth callback URLs, and public app URL
+- Supabase Storage bucket, policies, and app integration contract
+- Production OAuth/application identifiers, owner identity, and external integration credentials
+- Runtime secrets, backup/restore, monitoring, and migration rollback procedures
 
-### 4.2 নতুন প্রজেক্ট তৈরি করুন
+Never add real keys, passwords, connection URIs, or tokens to this repository or documentation.
 
-1. Vercel ড্যাশবোর্ডে যান
-2. **Add New** → **Project** ক্লিক করুন
-3. আপনার `blog-website` রেপোজিটরি খুঁজুন
-4. **Import** ক্লিক করুন
+## Troubleshooting
 
-### 4.3 এনভায়রনমেন্ট ভেরিয়েবল সেট করুন
+- **Connection refused/authentication failure:** verify the API runtime's `DATABASE_URL`, network access, SSL, Supabase project status, and connection selection without exposing the URI.
+- **Missing tables or SQL errors:** check that the active PostgreSQL migrations under `drizzle-postgres/` were applied. The `drizzle-legacy-mysql/` archive must not be used.
+- **Frontend loads but API fails:** a static frontend host does not run Express. Check the API host's process/logs and configured client-to-API route.
+- **Build succeeds but server does not start:** verify the API host starts the Node bundle with `pnpm start` or an equivalent command and provides required runtime values.
 
-Vercel ডিপ্লয়মেন্ট পেজে:
+## Related documents
 
-1. **Environment Variables** সেকশন খুঁজুন
-2. নিম্নলিখিত ভেরিয়েবল যোগ করুন:
+- [README.md](./README.md)
+- [QUICK_START_VERCEL.md](./QUICK_START_VERCEL.md)
+- [DEPLOYMENT_CHECKLIST.md](./DEPLOYMENT_CHECKLIST.md)
+- [SEED_DATA_GUIDE.md](./SEED_DATA_GUIDE.md)
 
-```
-DATABASE_URL = postgresql://postgres:[PASSWORD]@[HOST]:5432/postgres
-JWT_SECRET = your-super-secret-jwt-key-here
-VITE_APP_ID = your-app-id
-OAUTH_SERVER_URL = https://api.manus.im
-VITE_OAUTH_PORTAL_URL = https://app.manus.im
-OWNER_NAME = Your Name
-OWNER_OPEN_ID = your-open-id
-BUILT_IN_FORGE_API_URL = https://api.manus.im
-BUILT_IN_FORGE_API_KEY = your-api-key
-VITE_FRONTEND_FORGE_API_URL = https://api.manus.im
-VITE_FRONTEND_FORGE_API_KEY = your-frontend-key
-VITE_APP_URL = https://your-domain.example
-BLOG_BRAND_NAME = My Blog
-BLOG_LOGO_URL = https://your-cdn.example.com/logo.png
-BLOG_PRIMARY_COLOR = #4f46e5
-BLOG_ACCENT_COLOR = #ec4899
-OWNER_EMAIL = hello@your-domain.example
-VITE_ANALYTICS_ENDPOINT = https://analytics.example.com
-VITE_ANALYTICS_WEBSITE_ID = your-website-id
-```
 
-### 4.4 ডিপ্লয় করুন
+## Container deployment path (prepared, not deployed)
 
-1. সব ভেরিয়েবল যোগ করার পর **Deploy** ক্লিক করুন
-2. ডিপ্লয়মেন্ট সম্পন্ন হওয়ার জন্য অপেক্ষা করুন (২-৫ মিনিট)
-3. সফল হলে আপনি একটি URL পাবেন: `https://blog-website-xxxxx.vercel.app`
+The repository now includes a multi-stage `Dockerfile` for a single Express web service. It uses Node 22, installs from the locked pnpm workspace, builds the Vite client and Express bundle, installs production dependencies, and starts `node dist/index.js`; the server respects the platform-provided `PORT`. A Docker-capable host can serve the client and `/api/trpc` from the same origin, avoiding a separate frontend/API rewrite. Vercel's static frontend-only deployment still does not run this Express process.
 
----
-
-## ধাপ 5: ডাটাবেস সেটআপ সম্পন্ন করুন (5 মিনিট)
-
-### 5.1 Supabase-এ টেবিল তৈরি করুন
-
-1. Supabase ড্যাশবোর্ডে যান
-2. **SQL Editor** খুঁজুন
-3. নতুন কোয়েরি তৈরি করুন
-4. আপনার প্রজেক্টের `drizzle/` ফোল্ডার থেকে SQL ফাইল কপি করুন
-5. Supabase SQL Editor-এ পেস্ট করুন এবং চালান
-
-**অথবা** আরও সহজ উপায়:
+Local image commands (requires Docker):
 
 ```bash
-# আপনার লোকাল মেশিনে
-npm run db:push
+docker build -t my-blog .
+docker run --rm -p 3000:3000 --env-file .env.production my-blog
 ```
 
-এটি সব টেবিল তৈরি করবে।
-
----
-
-## ধাপ 6: আপনার সাইট পরীক্ষা করুন
-
-### 6.1 সাইট ভিজিট করুন
-
-```
-https://blog-website-xxxxx.vercel.app
-```
-
-আপনার ব্লগ হোমপেজ দেখতে পাবেন!
-
-### 6.2 Admin Panel অ্যাক্সেস করুন
-
-```
-https://blog-website-xxxxx.vercel.app/admin
-```
-
-লগইন করুন এবং প্রথম পোস্ট তৈরি করুন।
-
-### 6.3 নমুনা ডেটা যোগ করুন (অপশনাল)
-
-```bash
-# লোকাল মেশিনে
-npm run seed
-```
-
-এটি ৪টি নমুনা পোস্ট যোগ করবে।
-
----
-
-## ধাপ 7: কাস্টম ডোমেইন সংযুক্ত করুন (অপশনাল)
-
-### 7.1 Vercel-এ ডোমেইন যোগ করুন
-
-1. Vercel প্রজেক্ট সেটিংস খুঁজুন
-2. **Domains** সেকশন খুঁজুন
-3. আপনার ডোমেইন যোগ করুন
-4. DNS রেকর্ড কনফিগার করুন (Vercel নির্দেশনা অনুসরণ করুন)
-
-### 7.2 DNS সেটআপ
-
-আপনার ডোমেইন প্রোভাইডারে (GoDaddy, Namecheap, etc.):
-
-1. CNAME রেকর্ড যোগ করুন:
-   - Name: `www`
-   - Value: `cname.vercel-dns.com`
-
-2. A রেকর্ড যোগ করুন (রুট ডোমেইনের জন্য):
-   - Name: `@`
-   - Value: `76.76.19.165`
-
----
-
-## সমস্যা সমাধান
-
-### ডাটাবেস কানেকশন ব্যর্থ
-
-**সমস্যা:** `Connection refused` অথবা `ECONNREFUSED`
-
-**সমাধান:**
-1. DATABASE_URL সঠিক কিনা চেক করুন
-2. Supabase প্রজেক্ট চালু আছে কিনা চেক করুন
-3. পাসওয়ার্ড সঠিক কিনা চেক করুন
-
-### ডিপ্লয়মেন্ট ব্যর্থ
-
-**সমস্যা:** Build error অথবা deployment failed
-
-**সমাধান:**
-1. Vercel logs দেখুন
-2. সব environment variables সেট আছে কিনা চেক করুন
-3. GitHub রেপোজিটরি সঠিক কিনা চেক করুন
-
-### সাইট খোলা যাচ্ছে না
-
-**সমস্যা:** 404 অথবা blank page
-
-**সমাধান:**
-1. ডিপ্লয়মেন্ট সম্পন্ন হয়েছে কিনা অপেক্ষা করুন
-2. ব্রাউজার ক্যাশ ক্লিয়ার করুন (Ctrl+Shift+Delete)
-3. Vercel logs দেখুন
-
----
-
-## পরবর্তী ধাপ
-
-এখন আপনার ব্লগ লাইভ আছে! 🎉
-
-1. **প্রথম পোস্ট তৈরি করুন** - Admin Panel-এ যান এবং পোস্ট তৈরি করুন
-2. **নিউজলেটার সেটআপ করুন** - সাবস্ক্রাইবার সংগ্রহ করুন
-3. **কাস্টম ডোমেইন যোগ করুন** - আপনার নিজস্ব ডোমেইন ব্যবহার করুন
-4. **Google Search Console সেটআপ করুন** - SEO এর জন্য
-
----
-
-## দরকারি লিঙ্ক
-
-- [Vercel ড্যাশবোর্ড](https://vercel.com/dashboard)
-- [Supabase ড্যাশবোর্ড](https://app.supabase.com)
-- [GitHub রেপোজিটরি](https://github.com)
-- [আপনার সাইট](https://blog-website-xxxxx.vercel.app)
-
----
-
-## সাপোর্ট
-
-কোনো সমস্যা হলে:
-1. Vercel logs দেখুন
-2. Supabase logs দেখুন
-3. GitHub Issues খুলুন
-4. আমাদের সাথে যোগাযোগ করুন
-
----
-
-**অভিনন্দন! আপনার ব্লগ এখন লাইভ!** 🚀
+`.env.production` is a local placeholder filename only: create it privately, never commit it or bake credentials into the image. Set `DATABASE_URL`, OAuth/application values, `JWT_SECRET`, owner values, and any enabled integration credentials in the host's secret settings. Do not run schema migrations automatically at container startup; review and apply migrations as a separate release step. The Docker image itself has not been built in this environment because Docker is unavailable; the repository's `pnpm build` and tests passed. No provider account, service, domain, or production deployment has been configured.

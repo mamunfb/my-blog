@@ -1,0 +1,3 @@
+ARCHIVAL ONLY — LEGACY MYSQL MIGRATIONS
+
+These SQL files, snapshots, and the journal preserve the former MySQL migration history. They are not the active migration chain and must not be applied to PostgreSQL. The active PostgreSQL baseline and Drizzle Kit output are in ../drizzle-postgres/; Drizzle Kit is configured to use that directory.

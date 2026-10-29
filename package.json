@@ -10,7 +10,9 @@
     "check": "tsc --noEmit",
     "format": "prettier --write .",
     "test": "vitest run",
-    "db:push": "drizzle-kit generate && drizzle-kit migrate"
+    "db:generate": "drizzle-kit generate --config=drizzle.config.ts",
+    "db:migrate": "node -e 'if (!process.env.DATABASE_URL) { console.error(\"DATABASE_URL is required for db:migrate\"); process.exit(1); }' && drizzle-kit migrate --config=drizzle.config.ts",
+    "db:push": "pnpm db:generate && pnpm db:migrate"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.693.0",
@@ -64,7 +66,6 @@
     "input-otp": "^1.4.2",
     "jose": "6.1.0",
     "lucide-react": "^0.453.0",
-    "mysql2": "^3.15.0",
     "nanoid": "^5.1.5",
     "next-themes": "^0.4.6",
     "react": "^19.2.1",
@@ -74,6 +75,7 @@
     "react-resizable-panels": "^3.0.6",
     "recharts": "^2.15.2",
     "sonner": "^2.0.7",
+    "pg": "^8.16.3",
     "streamdown": "^1.4.0",
     "superjson": "^1.13.3",
     "tailwind-merge": "^3.3.1",
@@ -89,6 +91,7 @@
     "@types/express": "4.17.21",
     "@types/google.maps": "^3.58.1",
     "@types/node": "^24.7.0",
+    "@types/pg": "^8.15.5",
     "@types/react": "^19.2.1",
     "@types/react-dom": "^19.2.1",
     "@vitejs/plugin-react": "^5.0.4",
@@ -107,13 +110,5 @@
     "vite-plugin-manus-runtime": "^0.0.58",
     "vitest": "^2.1.4"
   },
-  "packageManager": "pnpm@10.4.1+sha512.c753b6c3ad7afa13af388fa6d808035a008e30ea9993f58c6663e2bc5ff21679aa834db094987129aa4d488b86df57f7b634981b2f827cdcacc698cc0cfb88af",
-  "pnpm": {
-    "patchedDependencies": {
-      "wouter@3.7.1": "patches/wouter@3.7.1.patch"
-    },
-    "overrides": {
-      "tailwindcss>nanoid": "3.3.7"
-    }
-  }
+  "packageManager": "pnpm@10.4.1+sha512.c753b6c3ad7afa13af388fa6d808035a008e30ea9993f58c6663e2bc5ff21679aa834db094987129aa4d488b86df57f7b634981b2f827cdcacc698cc0cfb88af"
 }

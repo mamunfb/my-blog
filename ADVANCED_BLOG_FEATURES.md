@@ -1,12 +1,12 @@
 # Advanced Blog Features
 
-এই সংস্করণে তিনটি requested feature production-ready করা হয়েছে।
+এই নথিতে app-এর feature ও setup notes রয়েছে। Database/deployment status সম্পর্কে README এবং deployment guide-এর সতর্কতাগুলো প্রযোজ্য: active PostgreSQL migration path `drizzle-postgres/`; পুরোনো MySQL migration chain `drizzle-legacy-mysql/` archive হিসেবে রাখা হয়েছে। Supabase project `my-blog` ও baseline schema তৈরি/apply হয়েছে; RLS policy, runtime credentials, API hosting এবং production setup এখনও configure/verify করতে হবে।
 
 ## 1. Post scheduling
 
-Admin Panel → **Create & Schedule** থেকে `Schedule publication`-এ ভবিষ্যতের তারিখ ও সময় নির্বাচন করুন। সময় API layer-এ UTC timestamp হিসেবে রাখা হয়। Scheduled post `draft` থাকে এবং নির্ধারিত সময় হলে Heartbeat cron endpoint সেটিকে `published` করে।
+Admin Panel → **Create & Schedule** থেকে `Schedule publication`-এ ভবিষ্যতের তারিখ ও সময় নির্বাচন করুন। সময় API layer-এ UTC timestamp হিসেবে রাখা হয়। Scheduled post `draft` থাকে এবং নির্ধারিত সময় হলে Heartbeat cron endpoint সেটিকে `published` করে। Endpoint ও scheduled job ব্যবহার করার আগে API runtime host এবং callback access configure ও পরীক্ষা করুন।
 
-Heartbeat job-এর উদাহরণ:
+Heartbeat job-এর উদাহরণ (শুধু সংশ্লিষ্ট Manus runtime/Heartbeat deployment সমর্থিত হলে):
 
 ```bash
 manus-heartbeat create \
@@ -15,7 +15,7 @@ manus-heartbeat create \
   --path /api/scheduled/publish-posts
 ```
 
-এটি প্রতি ৫ মিনিটে due পোস্ট publish করবে। Newsletter job আলাদা রাখতে হবে:
+Newsletter job আলাদা রাখতে হবে:
 
 ```bash
 manus-heartbeat create \
@@ -26,44 +26,42 @@ manus-heartbeat create \
 
 ## 2. Branded newsletter email
 
-Email handler `server/newsletterEmailHandler.ts` একটি responsive HTML template তৈরি করে। Template-এ logo, gradient header, CTA, blog link এবং unsubscribe footer থাকে। LLM শুধু ছোট email copy তৈরি করে; layout এবং brand wrapper server-side controlled থাকে।
-
-Vercel বা production environment-এ এগুলো যোগ করুন:
+Email handler `server/newsletterEmailHandler.ts` branded HTML email template তৈরি করে। Template configuration server-side environment-এ দিন; বাস্তব values বা credentials source control-এ দেবেন না।
 
 ```env
-BLOG_BRAND_NAME=My Blog
-BLOG_LOGO_URL=https://your-cdn.example.com/logo.png
-BLOG_PRIMARY_COLOR=#4f46e5
-BLOG_ACCENT_COLOR=#ec4899
-VITE_APP_URL=https://your-domain.example
-OWNER_EMAIL=hello@your-domain.example
+BLOG_BRAND_NAME=<your-blog-name>
+BLOG_LOGO_URL=<public-logo-url>
+BLOG_PRIMARY_COLOR=<hex-color>
+BLOG_ACCENT_COLOR=<hex-color>
+VITE_APP_URL=<public-app-url>
+OWNER_EMAIL=<owner-email>
 ```
 
-`BLOG_LOGO_URL` না দিলে template text mark ব্যবহার করবে।
+`BLOG_LOGO_URL` না দিলে template text mark ব্যবহার করতে পারে। Email ও external service behavior runtime host-এ configure ও test করুন।
 
 ## 3. Detailed post statistics
 
-প্রতিটি পোস্টের জন্য database-এ নিচের ইভেন্ট track হয়:
+Post analytics-এর database schema এবং API behavior deployment-এর database implementation ও migrations-এর সঙ্গে সামঞ্জস্যপূর্ণ হতে হবে। Production-এ চালুর আগে database query, event recording এবং admin display test করুন।
 
-- `view`: article খুললে `posts.viewCount` বাড়ে
-- `share`: Facebook, X/Twitter, LinkedIn, WhatsApp, Telegram, Email/Copy share
-- `comment`: engagement event schema-তে available; comment count comments table থেকে aggregate হয়
-- `read_time`: article page ছাড়ার সময় tracked seconds সংরক্ষিত হয়
+## Database migration status
 
-Admin Panel → **Analytics** এবং **Create & Schedule**-এর post table-এ views, shares, comments, average read time এবং schedule status দেখা যায়।
+`drizzle.config.ts` বর্তমানে PostgreSQL dialect ব্যবহার করে এবং migration output `drizzle-postgres/`-এ দেয়। Active PostgreSQL migration set-এর প্রথম ফাইল `drizzle-postgres/0000_great_mulholland_black.sql`; migration changes production-এ apply করার আগে review এবং non-production database-এ validate করুন.
 
-## Database migration
+`drizzle-legacy-mysql/`-এ পূর্ববর্তী MySQL migrations ও snapshots archive হিসেবে আছে। এগুলো PostgreSQL/Supabase-এ প্রয়োগ করবেন না। Current schema/relations `drizzle/`-এ।
 
-নতুন migration:
+বর্তমান package scripts:
 
 ```bash
-pnpm drizzle-kit generate
-pnpm drizzle-kit migrate
+pnpm db:generate
+pnpm db:migrate
+pnpm db:push
 ```
 
-বর্তমান migration `drizzle/0005_steady_xorn.sql`-এ `posts.scheduledPublishDate` যোগ করা হয়েছে।
+`db:migrate`-এর জন্য `DATABASE_URL` দরকার; `db:push` generation ও migration একসাথে চালায়। Target যাচাই ও generated SQL review করে তবেই চালান।
 
-## Verification
+## Verification commands
+
+Package scripts-এ বর্তমানে আছে:
 
 ```bash
 pnpm check
@@ -71,4 +69,4 @@ pnpm test
 pnpm build
 ```
 
-সবগুলো command ZIP তৈরির আগে সফলভাবে চালানো হয়েছে।
+Successful typecheck/build একাই Supabase database, production host বা full-stack readiness প্রমাণ করে না।
