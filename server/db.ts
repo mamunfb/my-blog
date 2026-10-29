@@ -133,7 +133,11 @@ export async function getLatestPosts(limit = 10, offset = 0) {
 export async function getPostBySlug(slug: string) {
   const db = await getDb();
   if (!db) return undefined;
-  const result = await db.select().from(posts).where(eq(posts.slug, slug)).limit(1);
+  const result = await db
+    .select()
+    .from(posts)
+    .where(and(eq(posts.slug, slug), eq(posts.published, "published")))
+    .limit(1);
   return result.length > 0 ? result[0] : undefined;
 }
 
@@ -193,9 +197,22 @@ export async function getPostComments(postId: number) {
   const db = await getDb();
   if (!db) return [];
   return db
-    .select()
+    .select({
+      id: comments.id,
+      postId: comments.postId,
+      content: comments.content,
+      approved: comments.approved,
+      createdAt: comments.createdAt,
+    })
     .from(comments)
-    .where(and(eq(comments.postId, postId), eq(comments.approved, 'approved')))
+    .innerJoin(posts, eq(comments.postId, posts.id))
+    .where(
+      and(
+        eq(comments.postId, postId),
+        eq(comments.approved, "approved"),
+        eq(posts.published, "published")
+      )
+    )
     .orderBy(desc(comments.createdAt));
 }
 
