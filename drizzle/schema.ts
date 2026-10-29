@@ -58,9 +58,10 @@ export const posts = mysqlTable("posts", {
   published: mysqlEnum("published", ["draft", "published", "archived"]).default("draft").notNull(),
   viewCount: int("viewCount").default(0).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
-  publishedAt: timestamp("publishedAt"),
-});
+	  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+	  publishedAt: timestamp("publishedAt"),
+	  scheduledPublishDate: timestamp("scheduledPublishDate"),
+	});
 
 export type Post = typeof posts.$inferSelect;
 export type InsertPost = typeof posts.$inferInsert;

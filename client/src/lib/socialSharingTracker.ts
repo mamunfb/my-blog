@@ -69,16 +69,10 @@ export class SocialSharingTracker {
   }
 
   private sendToServer(platform: string, action: "share" | "click") {
-    // Send to server via fetch (implement your API endpoint)
-    fetch("/api/track-sharing", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        postId: this.postId,
-        platform,
-        action,
-      }),
-    }).catch((error) => console.error("Failed to track sharing", error));
+    // Server persistence is handled by the tRPC blog.trackEngagement mutation.
+    // Keep this local tracker for instant UI feedback and offline resilience.
+    void platform;
+    void action;
   }
 
   getMetrics() {

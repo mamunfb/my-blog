@@ -20,7 +20,7 @@ import {
   Share2,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { toast } from "sonner";
 import { useLanguageTracking } from "@/hooks/useLanguageTracking";
 import { useTranslation } from "@/contexts/TranslationContext";
@@ -53,6 +53,8 @@ export default function BlogPost() {
       { enabled: !!post?.id }
     );
   const utils = trpc.useUtils();
+  const trackEngagement = trpc.blog.trackEngagement.useMutation();
+  const readingStartedAt = useRef<number | null>(null);
   const createCommentMutation = trpc.blog.createComment.useMutation({
     onSuccess: () => {
       toast.success("Comment submitted for moderation");
@@ -65,6 +67,30 @@ export default function BlogPost() {
       toast.error("Failed to submit comment");
     },
   });
+
+  useEffect(() => {
+    if (!post?.id) return;
+    readingStartedAt.current = Date.now();
+    trackEngagement.mutate({
+      postId: post.id,
+      eventType: "view",
+      language,
+    });
+
+    return () => {
+      if (readingStartedAt.current) {
+        const durationSeconds = Math.round((Date.now() - readingStartedAt.current) / 1000);
+        if (durationSeconds > 0) {
+          trackEngagement.mutate({
+            postId: post.id,
+            eventType: "read_time",
+            language,
+            durationSeconds,
+          });
+        }
+      }
+    };
+  }, [post?.id, language]);
 
   // Set SEO meta tags when post loads
   useEffect(() => {
@@ -220,7 +246,7 @@ export default function BlogPost() {
                     <Share2 className="w-5 h-5 text-pink-600 dark:text-pink-400" />
                     Share this article
                   </h3>
-                  <EnhancedSocialShare title={shareTitle} url={shareUrl} excerpt={post.excerpt || ''} />
+                  <EnhancedSocialShare postId={post.id} title={shareTitle} url={shareUrl} excerpt={post.excerpt || ''} />
                 </div>
 
                 {/* FEATURE 4: Post Rating */}

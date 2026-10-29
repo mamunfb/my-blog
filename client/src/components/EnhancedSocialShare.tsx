@@ -11,14 +11,17 @@ import {
 import { toast } from "sonner";
 import { useEffect, useState } from "react";
 import { SocialSharingTracker } from "@/lib/socialSharingTracker";
+import { trpc } from "@/lib/trpc";
 
 interface EnhancedSocialShareProps {
+  postId?: number;
   title: string;
   url: string;
   excerpt?: string;
 }
 
 export default function EnhancedSocialShare({
+  postId,
   title,
   url,
   excerpt = "",
@@ -37,27 +40,38 @@ export default function EnhancedSocialShare({
   };
 
   const [tracker, setTracker] = useState<SocialSharingTracker | null>(null);
+  const trackEngagement = trpc.blog.trackEngagement.useMutation();
 
   // Extract post ID from URL (assumes URL format like /blog/post-slug)
   const getPostId = () => {
     const match = url.match(/\/(\d+)/);
-    return match ? parseInt(match[1], 10) : 1; // Default to 1 if not found
+    return postId || (match ? parseInt(match[1], 10) : 1);
   };
 
   useEffect(() => {
     setTracker(new SocialSharingTracker(getPostId()));
-  }, [url]);
+  }, [url, postId]);
 
   const handleShare = (platform: string, link: string) => {
     if (platform === "copy") {
       navigator.clipboard.writeText(url);
       tracker?.trackShare("email"); // Track as email share
+      if (postId) {
+        trackEngagement.mutate({ postId, eventType: "share", platform: "copy" });
+      }
       toast.success("Link copied to clipboard!");
       return;
     }
 
     // Track the share
     tracker?.trackShare(platform as any);
+    if (postId) {
+      trackEngagement.mutate({
+        postId,
+        eventType: "share",
+        platform,
+      });
+    }
     window.open(link, "_blank", "width=600,height=400");
   };
 

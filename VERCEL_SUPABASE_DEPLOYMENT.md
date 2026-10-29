@@ -168,6 +168,12 @@ BUILT_IN_FORGE_API_URL = https://api.manus.im
 BUILT_IN_FORGE_API_KEY = your-api-key
 VITE_FRONTEND_FORGE_API_URL = https://api.manus.im
 VITE_FRONTEND_FORGE_API_KEY = your-frontend-key
+VITE_APP_URL = https://your-domain.example
+BLOG_BRAND_NAME = My Blog
+BLOG_LOGO_URL = https://your-cdn.example.com/logo.png
+BLOG_PRIMARY_COLOR = #4f46e5
+BLOG_ACCENT_COLOR = #ec4899
+OWNER_EMAIL = hello@your-domain.example
 VITE_ANALYTICS_ENDPOINT = https://analytics.example.com
 VITE_ANALYTICS_WEBSITE_ID = your-website-id
 ```

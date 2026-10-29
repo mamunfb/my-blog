@@ -10,6 +10,7 @@ import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 import { generateSitemap, generateRobotsTxt } from "../sitemapGenerator";
 import { handleNewsletterEmail } from "../newsletterEmailHandler";
+import { handleScheduledPublishing } from "../scheduledPublisher";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -69,6 +70,8 @@ async function startServer() {
 
   // Newsletter email notification handler (Heartbeat cron)
   app.post("/api/scheduled/newsletter-email", handleNewsletterEmail);
+  // Scheduled post publishing handler (Heartbeat cron)
+  app.post("/api/scheduled/publish-posts", handleScheduledPublishing);
   // tRPC API
   app.use(
     "/api/trpc",

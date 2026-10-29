@@ -84,6 +84,7 @@ export const appRouter = router({
         tags: z.array(z.number()).optional(),
         status: z.enum(["draft", "published", "archived"]).default("draft"),
         featuredImageUrl: z.string().optional(),
+        scheduledPublishDate: z.coerce.date().nullable().optional(),
       }))
       .mutation(async ({ input, ctx }) => {
         if (ctx.user?.role !== "admin") {
@@ -104,6 +105,7 @@ export const appRouter = router({
         tags: z.array(z.number()).optional(),
         status: z.enum(["draft", "published", "archived"]).optional(),
         featuredImageUrl: z.string().optional(),
+        scheduledPublishDate: z.coerce.date().nullable().optional(),
       }))
       .mutation(async ({ input, ctx }) => {
         if (ctx.user?.role !== "admin") {
@@ -139,6 +141,26 @@ export const appRouter = router({
         }
         const { getPostById } = await import("../server/db");
         return getPostById(input.id);
+      }),
+    getPostStatistics: protectedProcedure.query(async ({ ctx }) => {
+      if (ctx.user?.role !== "admin") {
+        throw new TRPCError({ code: "FORBIDDEN" });
+      }
+      const { getPostStatistics } = await import("../server/db");
+      return getPostStatistics();
+    }),
+    trackEngagement: publicProcedure
+      .input(z.object({
+        postId: z.number(),
+        eventType: z.enum(["view", "share", "comment", "read_time"]),
+        userId: z.number().optional(),
+        language: z.string().optional(),
+        durationSeconds: z.number().int().min(0).max(86400).optional(),
+        platform: z.string().max(50).optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const { trackPostEngagement } = await import("../server/db");
+        return trackPostEngagement(input);
       }),
     createComment: protectedProcedure
       .input(z.object({
