@@ -1,17 +1,17 @@
 # Professional Multilingual Blog Platform
 
-A React/Vite blog application with an Express and tRPC API, database-backed content, and admin features. **Supabase project `my-blog` (Singapore, ref `mbwtfbpoefqjfbnxozbx`) is created and the PostgreSQL baseline is applied. RLS is enabled on all 11 tables with zero policies; anon/authenticated table access is denied until policies are defined. The app itself is not deployed or production-validated.**
+A React/Vite blog application with an Express and tRPC API, database-backed content, and admin features. **Supabase project `my-blog` (Singapore, ref `mbwtfbpoefqjfbnxozbx`) is created and the PostgreSQL baseline is applied. RLS is enabled on all 11 tables; seven public `SELECT` policies exist and no anon/authenticated write policies exist. The applied policy SQL is archived under `supabase/manual/`, but is not yet in the active Drizzle migration chain. The app itself is not deployed or production-validated.**
 
 ## Architecture and deployment status
 
 - **Web client:** React 19 and Vite.
 - **Application/API server:** Express 4 with tRPC 11. The server serves the built client and exposes routes such as `/api/trpc`.
 - **Database target:** PostgreSQL hosted by Supabase. Supabase is for PostgreSQL and planned object storage, not the app's API server or a replacement for Express/tRPC.
-- **Active PostgreSQL migrations:** `drizzle-postgres/` is the PostgreSQL output path configured by `drizzle.config.ts`; it contains `0000_great_mulholland_black.sql` (baseline) and `0001_enable_rls_on_app_tables.sql` (RLS enabled, no policies). Both are applied and verified on the new Supabase project; the private Drizzle migration ledger has matching hashes/timestamps. Review and test later migrations before production use.
+- **Active PostgreSQL migrations:** `drizzle-postgres/` is the PostgreSQL output path configured by `drizzle.config.ts`; it contains the baseline and RLS-enablement migrations. The seven public-read policies were applied to the live Supabase project and are archived at `supabase/manual/applied_public_read_rls_2026-10-29.sql`, but that archive is not run by Drizzle. Add and verify a reviewed active migration before reproducing the live policy state on a fresh database.
 - **Archived MySQL migrations:** `drizzle-legacy-mysql/` contains the old MySQL migration chain and snapshots. It is retained for reference only and must not be applied to Supabase PostgreSQL. The `drizzle/` directory holds the current schema/relations and is not the old migration archive.
-- **Hosting caveat:** the source has no Vercel Functions or Express-to-Vercel adapter. Vercel may host the client, but a complete deployment also needs a compatible Express host and working routing. The new `Dockerfile` packages the client and API as one service for a Docker-capable host; no provider or live deployment is configured.
+- **Hosting:** the root `Dockerfile` packages the client and API as one service. Vercel's Container Runtime (Beta) can run this container; if framework detection selects Vite, set the project framework to Container. No Vercel project or live deployment is configured.
 
-Before deployment, decide whether any client-facing access policies are required, configure and test the Express server’s database role/connection, securely configure the Supabase PostgreSQL URI, confirm storage integration, select frontend-to-API routing, and set runtime secrets. The app has not been deployed. See [VERCEL_SUPABASE_DEPLOYMENT.md](./VERCEL_SUPABASE_DEPLOYMENT.md) and [DEPLOYMENT_CHECKLIST.md](./DEPLOYMENT_CHECKLIST.md).
+Before deployment, verify the seven public-read policies and record them in the active migration chain, configure and test the Express server's database role and public-query filters, securely configure the Supabase PostgreSQL URI, confirm storage integration, and set runtime secrets. The app has not been deployed. See [VERCEL_SUPABASE_DEPLOYMENT.md](./VERCEL_SUPABASE_DEPLOYMENT.md) and [DEPLOYMENT_CHECKLIST.md](./DEPLOYMENT_CHECKLIST.md).
 
 ## Features
 

@@ -1,6 +1,6 @@
 # PostgreSQL/Supabase deployment readiness checklist
 
-এই checklist পরিকল্পনা ও যাচাইয়ের জন্য। **App live বা production-ready—এমন দাবি নয়।** Supabase project ও baseline schema তৈরি/প্রয়োগ হয়েছে; RLS policy, runtime values, API host, routing ও full-stack validation বাকি.
+এই checklist পরিকল্পনা ও যাচাইয়ের জন্য। **App live বা production-ready—এমন দাবি নয়।** Supabase project ও baseline schema তৈরি/প্রয়োগ হয়েছে; ১১টি table-এ RLS ও সাতটি public-read policy live, তবে policy SQL active Drizzle chain-এ নেই। Runtime values, API host, routing ও full-stack validation বাকি.
 
 ## Deployment-এর আগে আবশ্যক
 
@@ -12,13 +12,13 @@
 - [x] নতুন Supabase project-এ baseline schema apply ও table-structure verification সম্পন্ন।
 - [ ] Migration upgrade path এবং production backup/rollback plan পরীক্ষা করুন।
 - [ ] Supabase Storage bucket, policy ও app integration/settings configure এবং upload/download পরীক্ষা করা হয়েছে, যদি ব্যবহৃত হয়।
-- [ ] Express/tRPC API চালানোর জন্য compatible Node.js runtime host নির্বাচন ও পরীক্ষা করা হয়েছে, অথবা Vercel adapter আলাদাভাবে implement ও verify হয়েছে।
+- [ ] Express/tRPC API চালানোর জন্য compatible Node.js runtime host পরীক্ষা করা হয়েছে; Vercel হলে Container Runtime preset ও root Dockerfile ব্যবহার/যাচাই করা হয়েছে।
 - [ ] Frontend-to-API routing, `/api/trpc`, OAuth callback ও public app URL পরীক্ষা করা হয়েছে।
 - [ ] Runtime host-এ PostgreSQL `DATABASE_URL` ও প্রয়োজনীয় server-side secret নিরাপদে সেট।
 
 ## বর্তমান repository facts
 
-- App API হলো Express + tRPC; source-এ Vercel Functions/Express adapter নেই।
+- App API হলো Express + tRPC; source-এ Vercel Functions/Express adapter নেই। Root Dockerfile আছে এবং Vercel Container Runtime Beta full server চালাতে পারে; project framework Container হিসেবে সেট করতে হতে পারে.
 - Supabase-এর ভূমিকা PostgreSQL এবং পরিকল্পিত Storage; এটি API server নয়।
 - `drizzle.config.ts` PostgreSQL dialect ব্যবহার করে এবং output path `drizzle-postgres/`; baseline ও RLS migration আছে এবং Supabase-এ apply হয়েছে।
 - `drizzle-legacy-mysql/` পুরোনো MySQL chain/snapshots-এর archive; PostgreSQL-এ চালাবেন না। `drizzle/`-এ schema/relations আছে।
@@ -28,8 +28,8 @@
 ## Supabase ও database যাচাই
 
 - [ ] URI শুধু API runtime host-এর secret manager-এ; git/docs-এ নেই।
-- [x] RLS all 11 tables-এ enabled; Supabase-এ policy তালিকা empty যাচাই হয়েছে.
-- [ ] Client-facing access লাগলে least-privilege RLS policies design/test করুন; Express DB role/privilegesও পরীক্ষা করুন.
+- [x] RLS সব 11 table-এ enabled; সাতটি public `SELECT` policy ও no-write state live Supabase-এ verify করা হয়েছে.
+- [ ] Applied public-read SQL-কে active migration chain-এ reconcile করুন; Express DB role/privileges এবং public-route publication filters পরীক্ষা করুন.
 - [x] Reviewed baseline apply; 11 table, 12 FK ও 3 enum যাচাই।
 - [ ] API read/write, indexes, backup/restore ও production migration upgrade path পরীক্ষা করুন।
 
@@ -41,7 +41,7 @@
 - [ ] `VITE_*` client build values-এ secret নেই।
 - [ ] Client `/api/trpc` ও অন্যান্য server route-এ API host-এর মাধ্যমে পৌঁছায়।
 - [ ] OAuth, database read/write, post workflow, image upload, logs ও health checks পরীক্ষা হয়েছে।
-- [ ] Vercel কেবল frontend host হলে সেটিকে complete app deployment বলা হয়নি।
+- [ ] Vercel-এ static Vite preset নয়, Container preset/root Dockerfile দিয়ে API ও client দুটোই চালানো হয়েছে; deployment full-stack smoke test পাস করেছে.
 
 ## Release readiness
 

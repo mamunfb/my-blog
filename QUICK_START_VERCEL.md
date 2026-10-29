@@ -1,14 +1,14 @@
 # Vercel + Supabase: quick readiness guide
 
-**সম্পূর্ণ app live—এমন নিশ্চয়তা নেই।** Supabase project `my-blog` ও baseline তৈরি হয়েছে; সব 11 table-এ RLS চালু, কিন্তু কোনো policy নেই—anon/authenticated table access তাই বন্ধ থাকবে। Server DB connection, runtime credentials, API hosting ও full-stack validation বাকি.
+**সম্পূর্ণ app live—এমন নিশ্চয়তা নেই।** Supabase project `my-blog` ও baseline তৈরি হয়েছে; ১১টি table-এ RLS চালু এবং public content-এর জন্য সাতটি read-only `SELECT` policy live। Client write policy নেই। Policy SQL `supabase/manual/`-এ archived, তবে active Drizzle migration chain-এ নেই। Server DB connection, runtime credentials, API hosting ও full-stack validation বাকি.
 
 ## প্রথমে যে বিষয়গুলো ঠিক করুন
 
 1. **Supabase PostgreSQL:** project তৈরি হয়েছে; dashboard থেকে connection URI নিয়ে শুধু Express API runtime host-এ secret হিসেবে রাখুন। URI docs/source control-এ নয়.
-2. **Migration sets:** `drizzle-postgres/` হলো active PostgreSQL path; baseline `0000_great_mulholland_black.sql` এবং RLS `0001_enable_rls_on_app_tables.sql` Supabase-এ apply হয়েছে। Drizzle migration ledger sync; `drizzle-legacy-mysql/` archive PostgreSQL-এ চালাবেন না.
-3. **API hosting:** Express/tRPC server চালাতে পারে এমন Node.js runtime host বাছুন, অথবা আলাদা adapter implement ও verify করুন। এই source-এ Vercel Functions/Express adapter নেই।
-4. **Frontend/API routing:** API আলাদা host-এ হলে `/api/trpc`, OAuth callback, public app URL এবং proxy/rewrite routing configure ও test করুন।
-5. **Storage/secrets:** Supabase Storage bucket/policy ও app integration values নির্দিষ্ট করুন। OAuth, owner identity, `JWT_SECRET` ও external API credentials নিরাপদে API runtime host-এ configure করুন। কোনো `VITE_*` client value-এ secret দেবেন না।
+2. **Migration sets:** `drizzle-postgres/` হলো active PostgreSQL path; baseline এবং RLS-enable migration apply হয়েছে। Live public-read policy SQL `supabase/manual/applied_public_read_rls_2026-10-29.sql`-এ archived, Drizzle chain-এ নেই—fresh DB-তে reproduce করার আগে reviewed migration হিসেবে যোগ ও পরীক্ষা করুন। `drizzle-legacy-mysql/` archive PostgreSQL-এ চালাবেন না.
+3. **API hosting:** Vercel Container Runtime (Beta) root `Dockerfile` চালিয়ে Express/tRPC ও frontend একই origin-এ host করতে পারে। Vercel framework detection Vite বেছে নিলে Container preset নির্বাচন করুন। শুধু static Vite deployment complete app নয়।
+4. **Frontend/API routing:** একই Vercel container-এ client ও API থাকলে same-origin route যাচাই করুন; API আলাদা host-এ হলে `/api/trpc`, OAuth callback, public app URL এবং proxy/rewrite configure ও test করুন।
+5. **Storage/secrets:** Supabase Storage bucket/policy ও app integration values নির্দিষ্ট করুন। OAuth, owner identity, `JWT_SECRET` ও external API credentials নিরাপদে API runtime host-এ configure করুন। কোনো `VITE_*` client value-এ secret দেবেন না। Server-side DB role RLS bypass করলে public routes-এ published/approved filtering test করুন।
 
 ## PostgreSQL connection format
 
@@ -26,7 +26,7 @@ Package scripts-এ `pnpm db:generate`, `pnpm db:migrate` ও `pnpm db:push` আ
 
 ## Vercel ব্যবহার করলে
 
-Vercel frontend host হতে পারে, তবে complete app-এর জন্য Express runtime এবং সঠিক API routing প্রয়োজন। Vercel frontend environment-এ `DATABASE_URL` যোগ করলেই Express server database-এ যুক্ত হয় না—database ও server secret যে host process চালায়, সেখানে values দিতে হবে।
+Vercel Container Runtime-এ root `Dockerfile` দিয়ে full Express app চালানো সম্ভব; project framework Container হওয়া দরকার, static Vite preset নয়। Container Runtime Beta সব plan-এ আছে; Hobby-তে monthly allowance সীমা ছাড়ালে অধিকাংশ ক্ষেত্রে quota reset না হওয়া পর্যন্ত feature pause হয়। `DATABASE_URL` ও server secret runtime environment-এ দিতে হবে। Vercel team-এ এখনও project/deployment তৈরি হয়নি।
 
 ## কখন deployment-ready বলবেন
 
