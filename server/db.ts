@@ -1,4 +1,4 @@
-import { and, desc, eq, sql } from "drizzle-orm";
+import { and, count, desc, eq, isNotNull, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
 import {
@@ -439,6 +439,49 @@ export async function getPostStatistics() {
       averageReadTimeSeconds: Math.round(Number(reading[0]?.value || 0)),
     };
   }));
+}
+
+export async function getAdminOverview() {
+  const db = await getDb();
+  if (!db) {
+    return {
+      totalPosts: 0,
+      publishedPosts: 0,
+      draftPosts: 0,
+      scheduledPosts: 0,
+      pendingComments: 0,
+      recentPosts: [],
+    };
+  }
+
+  const [total, published, drafts, scheduled, pending, recentPosts] = await Promise.all([
+    db.select({ value: count() }).from(posts),
+    db.select({ value: count() }).from(posts).where(eq(posts.published, "published")),
+    db.select({ value: count() }).from(posts).where(eq(posts.published, "draft")),
+    db.select({ value: count() }).from(posts).where(isNotNull(posts.scheduledPublishDate)),
+    db.select({ value: count() }).from(comments).where(eq(comments.approved, "pending")),
+    db
+      .select({
+        id: posts.id,
+        title: posts.title,
+        slug: posts.slug,
+        published: posts.published,
+        updatedAt: posts.updatedAt,
+        scheduledPublishDate: posts.scheduledPublishDate,
+      })
+      .from(posts)
+      .orderBy(desc(posts.updatedAt))
+      .limit(5),
+  ]);
+
+  return {
+    totalPosts: total[0]?.value ?? 0,
+    publishedPosts: published[0]?.value ?? 0,
+    draftPosts: drafts[0]?.value ?? 0,
+    scheduledPosts: scheduled[0]?.value ?? 0,
+    pendingComments: pending[0]?.value ?? 0,
+    recentPosts,
+  };
 }
 
 export async function createComment(postId: number, userId: number, content: string) {

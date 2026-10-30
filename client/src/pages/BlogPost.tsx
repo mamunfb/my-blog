@@ -292,7 +292,12 @@ export default function BlogPost() {
                           );
                         });
                       } else if (!isAuthenticated) {
-                        window.location.href = getLoginUrl();
+                        const loginUrl = getLoginUrl();
+                        if (loginUrl) {
+                          window.location.href = loginUrl;
+                        } else {
+                          toast.error("Login is unavailable in this preview because OAuth is not configured.");
+                        }
                       }
                     }}
                     onCommentDelete={async (commentId) => {
