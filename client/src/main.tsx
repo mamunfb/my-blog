@@ -18,7 +18,12 @@ const redirectToLoginIfUnauthorized = (error: unknown) => {
 
   if (!isUnauthorized) return;
 
-  window.location.href = getLoginUrl();
+  const loginUrl = getLoginUrl();
+  if (!loginUrl) {
+    console.error("[Auth] Login is unavailable because OAuth preview configuration is missing.");
+    return;
+  }
+  window.location.href = loginUrl;
 };
 
 queryClient.getQueryCache().subscribe(event => {

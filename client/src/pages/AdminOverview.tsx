@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { trpc } from "@/lib/trpc";
+import { getLoginUrl } from "@/const";
 import {
   ArrowRight,
   CalendarClock,
@@ -43,6 +44,7 @@ function postStatusClass(status: "draft" | "published" | "archived", scheduled: 
 export default function AdminOverview() {
   const { user, loading } = useAuth();
   const [, navigate] = useLocation();
+  const loginUrl = getLoginUrl();
   const isAdmin = user?.role === "admin";
   const { data, isLoading, isFetching, error, refetch } = trpc.blog.getAdminOverview.useQuery(undefined, {
     enabled: isAdmin,
@@ -66,8 +68,15 @@ export default function AdminOverview() {
   if (!isAdmin) {
     return (
       <main className="container py-12 text-center">
-        <h1 className="mb-3 text-2xl font-bold">প্রবেশাধিকার নেই</h1>
-        <p className="text-foreground/70">এই পৃষ্ঠাটি শুধু অ্যাডমিন ব্যবহারকারীদের জন্য।</p>
+        <h1 className="mb-3 text-2xl font-bold">{loginUrl ? "প্রবেশাধিকার নেই" : "Preview-তে লগইন সেটআপ নেই"}</h1>
+        <p className="mx-auto max-w-xl text-foreground/70">
+          {loginUrl
+            ? "এই পৃষ্ঠাটি শুধু অ্যাডমিন ব্যবহারকারীদের জন্য।"
+            : "এই Preview deployment-এ OAuth environment variables সেট নেই। তাই অ্যাডমিন হিসেবে প্রবেশ করা যাচ্ছে না; Production-এর secrets Preview-তে কপি করা হয়নি।"}
+        </p>
+        {loginUrl && (
+          <Button className="mt-6 mr-2" onClick={() => window.location.assign(loginUrl)}>সাইন ইন</Button>
+        )}
         <Button className="mt-6" variant="outline" onClick={() => navigate("/")}>ব্লগে ফিরে যান</Button>
       </main>
     );
