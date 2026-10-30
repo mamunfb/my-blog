@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
-import { useRoute } from "wouter";
+import { useLocation, useRoute } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -63,6 +63,7 @@ function formatDate(value?: Date | string | null) {
 
 export default function AdminPanel() {
   const { user, loading } = useAuth();
+  const [, navigate] = useLocation();
   const [, params] = useRoute("/admin/:tab");
   const [formData, setFormData] = useState<FormData>(EMPTY_FORM);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -82,6 +83,14 @@ export default function AdminPanel() {
   });
   const newsletterSubscribe = trpc.newsletter.subscribe.useMutation();
   const utils = trpc.useUtils();
+
+  useEffect(() => {
+    if (window.location.hash !== "#post-list") return;
+    const frame = window.requestAnimationFrame(() => {
+      document.getElementById("post-list")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [params?.tab]);
 
   const { loadDraft, deleteDraft } = useAutoSaveDraft(formData, {
     postId: editingPostId || undefined,
@@ -277,7 +286,7 @@ export default function AdminPanel() {
         </div>
       </div>
 
-      <Tabs value={tab} className="w-full">
+      <Tabs value={tab} onValueChange={(value) => navigate(`/admin/${value}`)} className="w-full">
         <TabsList className="grid w-full grid-cols-2 gap-1 md:grid-cols-5">
           <TabsTrigger value="posts">Create & Schedule</TabsTrigger>
           <TabsTrigger value="comments">Comments</TabsTrigger>
@@ -353,7 +362,7 @@ export default function AdminPanel() {
               </div>
             </form>
 
-            <div className="mt-8 border-t pt-8">
+            <div id="post-list" className="mt-8 border-t pt-8">
               <PostListingTable posts={postsWithStats} onEdit={handleEdit} onDelete={handleDelete} />
             </div>
           </Card>
