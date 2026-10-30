@@ -20,6 +20,8 @@ FROM node:22-bookworm-slim AS runtime
 WORKDIR /app
 ENV NODE_ENV=production
 ENV PORT=3000
+# Used by DATABASE_URL's sslrootcert option for verified Supabase TLS.
+COPY certs/supabase-prod-ca-2021.crt /app/certs/supabase-prod-ca-2021.crt
 COPY --from=production-deps /app/node_modules ./node_modules
 COPY --from=production-deps /app/package.json ./package.json
 COPY --from=build /app/dist ./dist
