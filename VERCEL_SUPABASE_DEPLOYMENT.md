@@ -44,12 +44,14 @@ Choose the API runtime host before deploying the frontend. Configure its server-
 
 - `DATABASE_URL`: Supabase PostgreSQL URI (secret)
 - `JWT_SECRET`: generated secret (secret)
-- `VITE_APP_ID`, `OAUTH_SERVER_URL`, and `OWNER_OPEN_ID`: valid OAuth/application configuration as required by the deployed app
+- `VITE_APP_ID` and `OWNER_OPEN_ID`: valid OAuth application/user configuration as required by the deployed app
+- `OAUTH_SERVER_URL`: backend OAuth API base, used for server-side token exchange and user-info requests (for example, `https://api.manus.im`)
+- `OAUTH_PORTAL_URL`: browser-facing sign-in portal base (defaults to `https://manus.im`; keep separate from `OAUTH_SERVER_URL`)
 - `BUILT_IN_FORGE_API_URL` and `BUILT_IN_FORGE_API_KEY`: if the integration is enabled; key is secret
 - `VITE_APP_URL`, `OWNER_EMAIL`, and branding values where required by the implementation
 - Storage-specific settings only after their exact names and access policy are confirmed
 
-Set secrets in the **Express runtime host**, not only in Vercel's frontend build environment. `VITE_*` values may be compiled into client assets and must not contain secrets. Verify the final required environment-variable list against the runtime code before launch.
+Set secrets in the **Express runtime host**, not only in Vercel's frontend build environment. `VITE_*` values may be compiled into client assets and must not contain secrets. The server runtime config endpoint exposes only the public app ID and browser-facing portal URL; it must never expose database credentials, `JWT_SECRET`, or `OWNER_OPEN_ID`. Verify the final required environment-variable list against the runtime code before launch.
 
 ## 4. Build and host the frontend/API
 
