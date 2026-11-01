@@ -11,6 +11,7 @@ import { serveStatic } from "./static";
 import { generateSitemap, generateRobotsTxt } from "../sitemapGenerator";
 import { handleNewsletterEmail } from "../newsletterEmailHandler";
 import { handleScheduledPublishing } from "../scheduledPublisher";
+import { ENV } from "./env";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -39,6 +40,19 @@ async function startServer() {
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
   registerStorageProxy(app);
   registerOAuthRoutes(app);
+
+  // These values are public OAuth client configuration, read at container runtime.
+  // Never expose database credentials, JWT secrets, or owner identifiers here.
+  app.get("/api/runtime-config.js", (_req, res) => {
+    res
+      .type("application/javascript")
+      .set("Cache-Control", "no-store")
+      .set("X-Content-Type-Options", "nosniff")
+      .send(`window.__MY_BLOG_CONFIG__ = ${JSON.stringify({
+        appId: ENV.appId,
+        oauthPortalUrl: ENV.oAuthServerUrl,
+      })};`);
+  });
 
   // Sitemap endpoint
   app.get("/sitemap.xml", async (req, res) => {
