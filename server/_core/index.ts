@@ -50,7 +50,7 @@ async function startServer() {
       .set("X-Content-Type-Options", "nosniff")
       .send(`window.__MY_BLOG_CONFIG__ = ${JSON.stringify({
         appId: ENV.appId,
-        oauthPortalUrl: ENV.oAuthServerUrl,
+        oauthPortalUrl: ENV.oAuthPortalUrl,
       })};`);
   });
 
