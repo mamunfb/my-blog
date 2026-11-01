@@ -47,6 +47,7 @@ export default function DashboardLayout({
     return saved ? parseInt(saved, 10) : DEFAULT_WIDTH;
   });
   const { loading, user } = useAuth();
+  const loginUrl = getLoginUrl();
 
   useEffect(() => {
     localStorage.setItem(SIDEBAR_WIDTH_KEY, sidebarWidth.toString());
@@ -65,17 +66,18 @@ export default function DashboardLayout({
               Sign in to continue
             </h1>
             <p className="text-sm text-muted-foreground text-center max-w-sm">
-              Access to this dashboard requires authentication. Continue to launch the login flow.
+              {loginUrl
+                ? "Access to this dashboard requires authentication. Continue to launch the login flow."
+                : "The sign-in service is not configured for this preview. Ask the project owner to configure the preview environment."}
             </p>
           </div>
           <Button
-            onClick={() => {
-              window.location.href = getLoginUrl();
-            }}
+            onClick={() => loginUrl && (window.location.href = loginUrl)}
             size="lg"
             className="w-full shadow-lg hover:shadow-xl transition-all"
+            disabled={!loginUrl}
           >
-            Sign in
+            {loginUrl ? "Sign in" : "Sign-in unavailable"}
           </Button>
         </div>
       </div>

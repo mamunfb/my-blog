@@ -3,7 +3,7 @@ import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { translationRouter } from "./translationRouter";
 import { newsletterRouter } from "./newsletterRouter";
-import { protectedProcedure, publicProcedure, router } from "./_core/trpc";
+import { adminProcedure, protectedProcedure, publicProcedure, router } from "./_core/trpc";
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 
@@ -23,6 +23,10 @@ export const appRouter = router({
   }),
 
   blog: router({
+    getAdminOverview: adminProcedure.query(async () => {
+      const { getAdminOverview } = await import("../server/db");
+      return getAdminOverview();
+    }),
     // Public queries
     getFeaturedPosts: publicProcedure.query(async () => {
       const { getFeaturedPosts } = await import("../server/db");

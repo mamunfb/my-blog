@@ -8,8 +8,8 @@ import { TranslationProvider } from "./contexts/TranslationContext";
 import Home from "./pages/Home";
 import BlogListing from "./pages/BlogListing";
 import BlogPost from "./pages/BlogPost";
-import AdminDashboard from "./pages/AdminDashboard";
 import AdminPanel from "./pages/AdminPanel";
+import AdminOverview from "./pages/AdminOverview";
 import FeaturesShowcase from "./pages/FeaturesShowcase";
 import { Footer } from "./components/Footer";
 
@@ -23,7 +23,7 @@ function Router() {
           <Route path={"/features"} component={FeaturesShowcase} />
           <Route path={"/blog"} component={BlogListing} />
           <Route path={"/blog/:slug"} component={BlogPost} />
-          <Route path={"/admin"} component={AdminPanel} />
+          <Route path={"/admin"} component={AdminOverview} />
           <Route path={"/admin/:tab"} component={AdminPanel} />
           <Route path={"/404"} component={NotFound} />
           {/* Final fallback route */}

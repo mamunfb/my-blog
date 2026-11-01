@@ -17,6 +17,7 @@ export default function Navigation({ categories = [] }: NavigationProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [location, navigate] = useLocation();
   const [searchQuery, setSearchQuery] = useState("");
+  const loginUrl = getLoginUrl();
 
   const isActive = (path: string) => location === path;
 
@@ -119,9 +120,13 @@ export default function Navigation({ categories = [] }: NavigationProps) {
                 </Button>
               </>
             ) : (
-              <a href={getLoginUrl()}>
-                <Button size="sm">Login</Button>
-              </a>
+              loginUrl ? (
+                <a href={loginUrl}>
+                  <Button size="sm">Login</Button>
+                </a>
+              ) : (
+                <Button size="sm" disabled title="OAuth login is not configured for this preview">Login unavailable</Button>
+              )
             )}
           </div>
 
@@ -218,11 +223,15 @@ export default function Navigation({ categories = [] }: NavigationProps) {
                   </Button>
                 </>
               ) : (
-                <a href={getLoginUrl()} className="w-full">
-                  <Button size="sm" className="w-full">
-                    Login
+                loginUrl ? (
+                  <a href={loginUrl} className="w-full">
+                    <Button size="sm" className="w-full">Login</Button>
+                  </a>
+                ) : (
+                  <Button size="sm" className="w-full" disabled title="OAuth login is not configured for this preview">
+                    Login unavailable
                   </Button>
-                </a>
+                )
               )}
             </div>
           </div>
